@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>極簡送貨與驗證系統 (極速版)</title>
-<script src="https://unpkg.com/@zxing/library@latest"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<title>極簡送貨與驗證系統【內地華為小米專用版】</title>
+<!-- 國內鏡像替換原unpkg / cdnjs，大陸網路可直連；企業內網建議下載js檔案本地托管 -->
+<script src="https://s4.zstatic.net/npm/@zxing/library@0.20.0"></script>
+<script src="https://s4.zstatic.net/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   :root {
     --ink: #0f172a;
@@ -332,7 +333,6 @@
     object-fit: cover;
     display: block;
   }
-  /* 中央單一準星對準框：防止一張卡多個Barcode誤掃 */
   .scan-reticle {
     position: absolute;
     top: 50%;
@@ -390,19 +390,22 @@
     width: 100%; margin-top: 20px; background: #0f172a; color: #fff; border: 0;
     padding: 18px; border-radius: 16px; font-weight: 900; font-size: 20px; cursor: pointer;
   }
+  .warn-domestic{
+    background:#fff3cd;color:#856404;padding:12px 14px;border-radius:12px;border:2px solid #ffeeba;margin-bottom:12px;font-weight:bold;font-size:14px;
+  }
 </style>
 </head>
 <body>
 
-<!-- 提示使用外部瀏覽器 Banner -->
-<div id="browserAlert" class="hidden" style="background:#f59e0b; color:#fff; padding:12px 16px; font-size:15px; font-weight:bold; text-align:center;">
-  ⚠️ 偵測到您可能使用內置瀏覽器，若相機或分享受限，請點擊右上角 <span style="font-size:18px;">...</span> 選擇<b>「在瀏覽器中打開」</b>(Safari / Chrome)。
+<div id="browserAlert" class="hidden" style="background:#f59e0b; color:#fff; padding:14px 16px; font-size:16px; font-weight:bold; text-align:center;">
+  ⚠️【華為/小米內地版重要提醒】切勿使用微信內置瀏覽器！點右上角「...」→在瀏覽器打開（推薦：華為瀏覽器、小米瀏覽器、Chrome）<br>
+  請到手機【設定】→應用→瀏覽器→權限，將相機設為【僅在使用該應用時允許】
 </div>
 
-<!-- 登入頁面 -->
 <div id="login" class="login">
   <div class="loginbox">
-    <div class="eyebrow">送貨管理系統</div>
+    <div class="eyebrow">送貨管理系統｜內地國行手機專用</div>
+    <div class="warn-domestic">⚠️本機全部記錄存在瀏覽器本地；華為/小米系統優化清理快取會丟失數據，務必每日匯出ZIP備份！</div>
     <h1 style="font-size: 24px;">請輸入員工編號</h1>
     <div class="row">
       <input type="text" inputmode="numeric" pattern="[0-9]*" id="staff" placeholder="請輸入員工編號" oninput="checkStaffSavedType()">
@@ -421,10 +424,9 @@
   </div>
 </div>
 
-<!-- 主程式 -->
 <div id="app" class="app hidden">
   <header class="head">
-    <div class="eyebrow">精簡版送貨系統 (華為/小米專屬 + 跨裝置相容)</div>
+    <div class="eyebrow">精簡版送貨系統｜國行華為鴻蒙 / 小米HyperOS專用</div>
     <h1>目的地對比與拍照驗證</h1>
     <div class="runner">
       <div>
@@ -444,7 +446,7 @@
   </div>
 
   <main id="work" style="padding: 20px;">
-    <!-- 第一步：刷貨卡 -->
+    <div class="warn-domestic">💡華為手機掃描模糊提示：若畫面模糊，手機稍微遠離條碼，不要貼太近；系統儲存空間快滿時務必匯出備份ZIP！</div>
     <section class="card">
       <div class="step">第一步</div>
       <div class="title">掃描貨卡條碼 (送貨點)</div>
@@ -454,7 +456,6 @@
       <div id="binCardStatus"></div>
     </section>
 
-    <!-- 第二步：目的地對比 -->
     <section id="destCard" class="card">
       <div class="step">第二步</div>
       <div class="title">驗證目的地條碼</div>
@@ -465,7 +466,6 @@
       <div id="destStatus"></div>
     </section>
 
-    <!-- 第三步：拍照存證 -->
     <section class="card">
       <div class="step" id="photoStepTitle">第三步</div>
       <div class="title">拍照存證</div>
@@ -476,12 +476,13 @@
 
       <div class="btn-group">
         <button id="completeBtn" class="complete-btn" disabled onclick="completeDelivery(false)">✅ 完成送貨</button>
-        <button id="wechatBtn" class="wechat-btn" disabled onclick="completeDelivery(true)">💬 完成並分享至 WeChat (含照片)</button>
+        <button id="wechatBtn" class="wechat-btn" disabled onclick="completeDelivery(true)">💬 完成並分享至 WeChat (內地手機多數只能複製文字，相片手動貼)</button>
       </div>
     </section>
   </main>
 
   <main id="history" class="hidden" style="padding: 20px;">
+    <div class="warn-domestic">⚠️【重要】華為/小米內地版系統會自動清理瀏覽器本地數據，建議每日下班前匯出ZIP壓縮檔備份！</div>
     <div class="row">
       <input id="search" placeholder="🔍 搜尋貨卡 / 目的地 / 類型" oninput="renderHistory()">
     </div>
@@ -491,12 +492,11 @@
     <button class="export-btn" onclick="exportDeliveryArchive()" style="background: var(--wechat);">📤 匯出並傳送至 WeChat (.zip)</button>
     <div id="downloadArea" style="margin-top: 12px;"></div>
 
-    <button class="admin-btn" onclick="adminClearRecords()" style="margin-top: 14px;">🛡️ 管理員清空記錄 (Admin)</button>
+    <button class="admin-btn" onclick="adminClearRecords()" style="margin-top: 14px;">🛡️ 管理員清空記錄 (Admin，務必先匯出備份)</button>
     <div id="records" style="margin-top: 20px;"></div>
   </main>
 </div>
 
-<!-- 更改類別大按鈕 Modal -->
 <div id="typeModal" class="overlay hidden">
   <div class="scanbox" style="text-align: center; padding: 30px;">
     <h3 style="font-size: 24px; margin-bottom: 20px;">請選擇要更改的貨物類型</h3>
@@ -508,7 +508,6 @@
   </div>
 </div>
 
-<!-- 放大檢視圖片 Modal -->
 <div id="imageModal" class="overlay hidden" onclick="closeImageModal()">
   <div style="max-width: 90%; max-height: 90%; text-align: center;">
     <img id="modalImg" style="max-width: 100%; max-height: 85vh; border-radius: 16px;" src="">
@@ -516,7 +515,6 @@
   </div>
 </div>
 
-<!-- 掃描 Overlay (加入中央準星裁切框) -->
 <div id="scanner" class="overlay hidden">
   <div class="scanbox" style="text-align: center;">
     <span id="engineBadge" class="engine-badge">⚡ 偵測引擎初始化...</span>
@@ -527,12 +525,11 @@
         <div class="scan-laser"></div>
       </div>
     </div>
-    <p id="scanMsg" class="hint" style="text-align: center; margin-top: 10px; font-weight: bold; color: #0f172a;">請將【單一目標條碼】放入藍色框內</p>
+    <p id="scanMsg" class="hint" style="text-align: center; margin-top: 10px; font-weight: bold; color: #0f172a;">請將【單一目標條碼】放入藍色框內｜華為手機畫面模糊請拿遠一點</p>
     <button class="button-action" style="width:100%; margin-top:12px;" onclick="closeScanner()">關閉相機</button>
   </div>
 </div>
 
-<!-- 拍照 Overlay -->
 <div id="proofCamera" class="overlay hidden">
   <div class="scanbox">
     <h3>即時拍照存證</h3>
@@ -558,29 +555,13 @@ let codeReader = null;
 let isProcessingScan = false;
 let nativeScanLoopId = null;
 let activeScanStream = null;
-let key = 'simple_delivery_v3';
+let key = 'simple_delivery_v3_mainland_cn';
 let records = JSON.parse(localStorage.getItem(key) || '[]');
 let day = new Date().toLocaleDateString('sv-SE');
 
-// 所需條碼格式清單
 const REQUIRED_BARCODE_FORMATS = ['code_128', 'code_39', 'ean_13', 'qr_code', 'codabar', 'itf'];
 const MAX_NATIVE_DETECT_ERRORS = 3;
 
-// 寫死偵測華為 / 小米裝置（含 Honor / Redmi / Mi / MIUI / HyperOS）
-function isHuaweiOrXiaomiDevice() {
-  const ua = (navigator.userAgent || '').toLowerCase();
-  return (
-    ua.includes('huawei') ||
-    ua.includes('honor') ||
-    ua.includes('xiaomi') ||
-    ua.includes('redmi') ||
-    /\bmi\b/.test(ua) ||
-    ua.includes('miui') ||
-    ua.includes('hyperos')
-  );
-}
-
-// 音效提示（掃描秒讀成功時「咇」一聲）
 function playBeep() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -598,7 +579,8 @@ function playBeep() {
 
 function init() {
   const ua = navigator.userAgent.toLowerCase();
-  if (ua.indexOf('micromessenger') !== -1 || ua.indexOf('wv') !== -1) {
+  // 增強微信X5內核檢測，國行手機微信內置瀏覽器強彈提示
+  if (ua.indexOf('micromessenger') !== -1 || ua.indexOf('wv') !== -1 || ua.indexOf('x5')!==-1) {
     document.getElementById('browserAlert').classList.remove('hidden');
   }
 
@@ -682,7 +664,7 @@ function applyBinCard(v) {
     destination = null;
     document.getElementById('binCardStatus').innerHTML = `
       <div class="status ok">
-        <span>✓ 貨卡: ${esc(v)} <span class="tag-nonhub">Non-hub 免對比</span></span>
+        <span>✓ 貨卡: ${esc(v)} <span class="tag-nonhub">Non‑hub 免對比</span></span>
         <b onclick="resetBinCard()" style="cursor:pointer;">×</b>
       </div>`;
   } else {
@@ -762,18 +744,15 @@ async function openProofCamera() {
 
   document.getElementById('proofCamera').classList.remove('hidden');
   try {
-    const isHwXm = isHuaweiOrXiaomiDevice();
     const stream = await acquireCameraStreamWithFallback({
-      preferredWidth: isHwXm ? 640 : 1024,
-      preferredHeight: isHwXm ? 480 : 768,
-      fallbackWidth: 640,
-      fallbackHeight: 480
+      preferredWidth: 1024,
+      preferredHeight: 768
     });
     const video = document.getElementById('proofVideo');
     video.srcObject = stream;
     await video.play();
   } catch (e) {
-    alert('無法開啟相機，請檢查瀏覽器相機權限');
+    alert('無法開啟相機！華為/小米用戶請到手機設定確認瀏覽器已授予相機權限【僅在使用應用時允許】');
     closeProofCamera();
   }
 }
@@ -787,9 +766,8 @@ function takeProofPhoto() {
   canvas.height = video.videoHeight;
   const ctx = canvas.getContext('2d');
   ctx.drawImage(video, 0, 0);
-
-  // 壓縮品質設為 0.72，減輕 Android 記憶體同分享壓力
-  photos.push(canvas.toDataURL('image/jpeg', 0.72));
+  // 【內地版修改】壓縮率調低到0.6，減少base64體積，減慢localStorage爆滿速度
+  photos.push(canvas.toDataURL('image/jpeg', 0.60));
   closeProofCamera();
   renderPhotos();
 }
@@ -845,8 +823,8 @@ function addWatermarkToImage(dataUrl, timeStr) {
       ctx.fillStyle = "#ffffff";
       ctx.font = `bold ${Math.round(fontSize * 0.8)}px sans-serif`;
       ctx.fillText(text2, x, y + fontSize * 2 + 5);
-
-      resolve(canvas.toDataURL('image/jpeg', 0.75));
+      //【內地版】水印圖片壓縮率0.62
+      resolve(canvas.toDataURL('image/jpeg', 0.62));
     };
     img.src = dataUrl;
   });
@@ -860,7 +838,7 @@ function completeDelivery(shareToWeChat = false) {
     deliveryType: runner.deliveryType || '街貨',
     binCard: binCard.code,
     isNonHub: isNonHub,
-    destination: isNonHub ? 'Non-hub (直達)' : destination.code,
+    destination: isNonHub ? 'Non‑hub (直達)' : destination.code,
     photos: photos,
     completedAt: completedTime
   };
@@ -869,7 +847,7 @@ function completeDelivery(shareToWeChat = false) {
   try {
     localStorage.setItem(key, JSON.stringify(records));
   } catch (err) {
-    alert('儲存空間不足！請使用下方 Admin 清空舊記錄。');
+    alert('⚠️儲存空間已滿！華為小米內地版容易出現，請立刻匯出ZIP備份，再使用管理員清空舊記錄！');
     records.pop();
     return;
   }
@@ -898,7 +876,7 @@ function dataURLtoFile(dataurl, filename) {
 }
 
 async function shareToWeChatAction(rec) {
-  const textMsg = `【送貨完成記錄與照片】\n貨卡：${rec.binCard}\n類型：${rec.isNonHub ? 'Non-hub' : '標準配送'}\n目的地：${rec.destination}\n完成時間：${rec.completedAt}`;
+  const textMsg = `【送貨完成記錄與照片】\n貨卡：${rec.binCard}\n類型：${rec.isNonHub ? 'Non‑hub' : '標準配送'}\n目的地：${rec.destination}\n完成時間：${rec.completedAt}`;
 
   try {
     let filesArray = [];
@@ -909,26 +887,34 @@ async function shareToWeChatAction(rec) {
         filesArray.push(file);
       }
     }
-
+    //【內地版增強：國行華為小米瀏覽器canShare返回true但實際傳檔失敗，優先捕獲異常】
     if (navigator.canShare && navigator.canShare({ files: filesArray })) {
-      await navigator.share({
-        title: '送貨完成記錄與照片',
-        text: textMsg,
-        files: filesArray
-      });
-    } else if (navigator.share) {
+      try {
+        await navigator.share({
+          title: '送貨完成記錄與照片',
+          text: textMsg,
+          files: filesArray
+        });
+        return;
+      } catch (errNativeShare) {
+        if (errNativeShare.name !== 'AbortError') {
+          console.warn("國行手機檔案分享失敗，切換備援複製文字", errNativeShare);
+        }
+      }
+    }
+    if (navigator.share) {
       await navigator.share({
         title: '送貨完成記錄',
         text: textMsg
       });
-    } else {
-      throw new Error('不支援 share API');
+      return;
     }
+    throw new Error("本瀏覽器不支援分享API");
   } catch (err) {
     if (err.name !== 'AbortError') {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(textMsg);
-        alert('Android 瀏覽器限制直接傳送檔案，已自動複製文字記錄！請於 WeChat 貼上並附上相片。');
+        await navigator.clipboard.writeText(textMsg);
+        alert('⚠️【華為/小米內地版限制】瀏覽器無法直接發送圖片檔案！文字已複製剪貼簿，請手動打開微信貼上文字，再手動附加相簿相片。');
       } else {
         alert(textMsg);
       }
@@ -944,7 +930,7 @@ function shareHistoryRecord(id) {
 }
 
 function adminClearRecords() {
-  const pwd = prompt('請輸入管理員密碼以清空記錄：');
+  const pwd = prompt('請輸入管理員密碼以清空記錄：【⚠️一定要先匯出ZIP備份！】');
   if (pwd === '888888') {
     records = [];
     localStorage.removeItem(key);
@@ -973,13 +959,13 @@ function renderHistory() {
   const filtered = records.filter(r => (r.binCard + r.destination + (r.deliveryType || '')).toLowerCase().includes(q));
   document.getElementById('records').innerHTML = filtered.map(r => `
     <div class="card">
-      <div style="font-size: 18px; font-weight: bold;">貨卡：${esc(r.binCard)} ${r.isNonHub ? '<span class="tag-nonhub">Non-hub</span>':''} <span class="tag-type">${esc(r.deliveryType || '街貨')}</span></div>
+      <div style="font-size: 18px; font-weight: bold;">貨卡：${esc(r.binCard)} ${r.isNonHub ? '<span class="tag-nonhub">Non‑hub</span>':''} <span class="tag-type">${esc(r.deliveryType || '街貨')}</span></div>
       <div class="hint">目的地：${esc(r.destination)} | 送貨員：${esc(r.runner?.staffId)}</div>
       <div class="hint">完成時間：${esc(r.completedAt)}</div>
       <div class="photos" style="margin-top:8px;">
         ${r.photos.map(p => `<div class="photo"><img src="${p}" onclick="showImageModal('${p}')"></div>`).join('')}
       </div>
-      <button class="history-wechat-btn" onclick="shareHistoryRecord('${r.id}')">💬 再次分享至 WeChat (含照片)</button>
+      <button class="history-wechat-btn" onclick="shareHistoryRecord('${r.id}')">💬 再次分享至 WeChat (內地手機多數只能複製文字)</button>
     </div>
   `).join('');
 }
@@ -993,7 +979,6 @@ function closeImageModal() {
   document.getElementById('imageModal').classList.add('hidden');
 }
 
-// 處理掃描結果
 function handleScanSuccess(text) {
   if (isProcessingScan) return;
   isProcessingScan = true;
@@ -1011,22 +996,13 @@ function handleScanSuccess(text) {
   stopActiveCamera();
 }
 
-// ==========================================
-// [SCANNER COMPATIBILITY LAYER]
-// 1. 寫死華為 / 小米專屬規則 + 能力偵測
-// 2. 相機漸進式降級 (1280x720 -> 640x480 -> 通用鏡頭；華為/小米優先 640x480)
-// 3. Level 1 BarcodeDetector (格式過濾 + 連續錯誤降級)
-// 4. Level 2 ZXing (複用既有 <video> 串流，不重複請求相機)
-// 5. 集中式相機關閉與清理
-// ==========================================
-
 function checkCameraEnvironment() {
   if (!window.isSecureContext) {
-    alert('此功能必須在 HTTPS 安全連線下開啟，請確認網址為 https://');
+    alert('⚠️必須使用HTTPS安全網址，http或者本地檔案無法開啟相機！');
     return false;
   }
   if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
-    alert('目前瀏覽器不支援相機功能，請改用支援的瀏覽器（如 Chrome 或 Safari）開啟。');
+    alert('⚠️本瀏覽器不支援相機；華為/小米內地版請使用系統自帶瀏覽器或Chrome；請到手機設定確認瀏覽器相機權限【僅在使用該應用時允許】');
     return false;
   }
   return true;
@@ -1037,9 +1013,8 @@ async function acquireCameraStreamWithFallback(options = {}) {
   const h1 = options.preferredHeight || 720;
   const w2 = options.fallbackWidth || 640;
   const h2 = options.fallbackHeight || 480;
-
+  // 【鴻蒙關鍵：只使用 facingMode ideal environment，禁止寫死deviceId，避免選到長焦鏡頭掃描模糊】[[(Huawei Dev...)]](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/web-rtc?f_link_type=f_linkinlinenote&flow_extra=eyJpbmxpbmVfZGlzcGxheV9wb3NpdGlvbiI6MCwiZG9jX3Bvc2l0aW9uIjowLCJkb2NfaWQiOiIwOWQwMjYyMGQ2NjVlMjI5LTJjZmRlZjFiYWIxOTVkZDkifQ%3D%3D "(Huawei Dev...)")
   const candidateConstraints = [
-    // Level 1: Preferred resolution on rear camera
     {
       video: {
         facingMode: { ideal: 'environment' },
@@ -1048,7 +1023,6 @@ async function acquireCameraStreamWithFallback(options = {}) {
       },
       audio: false
     },
-    // Level 2: VGA resolution on rear camera
     {
       video: {
         facingMode: { ideal: 'environment' },
@@ -1057,14 +1031,12 @@ async function acquireCameraStreamWithFallback(options = {}) {
       },
       audio: false
     },
-    // Level 3: Generic rear camera
     {
       video: {
         facingMode: 'environment'
       },
       audio: false
     },
-    // Final generic fallback
     {
       video: true,
       audio: false
@@ -1083,14 +1055,10 @@ async function acquireCameraStreamWithFallback(options = {}) {
   throw lastError || new Error('所有相機模式皆無法啟動');
 }
 
-function setScannerBadge(mode, isHwXm = false) {
+function setScannerBadge(mode) {
   const badge = document.getElementById('engineBadge');
   if (!badge) return;
-  if (isHwXm) {
-    badge.textContent = '📱 華為/小米專屬相容模式 (ZXing)';
-    badge.style.background = '#fef3c7';
-    badge.style.color = '#92400e';
-  } else if (mode === 'native') {
+  if (mode === 'native') {
     badge.textContent = '⚡ 高速掃描模式';
     badge.style.background = '#dcfce7';
     badge.style.color = '#166534';
@@ -1116,9 +1084,9 @@ async function getSupportedNativeFormats() {
   }
 }
 
-function startZxingOnExistingVideo(videoEl, isHwXm = false) {
+function startZxingOnExistingVideo(videoEl) {
   if (isProcessingScan) return;
-  setScannerBadge('zxing', isHwXm);
+  setScannerBadge('zxing');
 
   if (nativeScanLoopId) {
     clearTimeout(nativeScanLoopId);
@@ -1132,36 +1100,23 @@ function startZxingOnExistingVideo(videoEl, isHwXm = false) {
       codeReader.reset();
     }
 
-    // 直接使用已開啟的 <video> 元素與串流，避免重複請求 getUserMedia()
-    if (typeof codeReader.decodeFromVideoElementContinuously === 'function') {
-      codeReader.decodeFromVideoElementContinuously(videoEl, (result, err) => {
-        if (isProcessingScan) return;
-        if (result && result.text) {
-          handleScanSuccess(result.text);
-        }
-      });
-    } else {
-      codeReader.decodeFromVideoElement(videoEl, (result, err) => {
-        if (isProcessingScan) return;
-        if (result && result.text) {
-          handleScanSuccess(result.text);
-        }
-      });
-    }
+    codeReader.decodeFromVideoElementContinuously(videoEl, (result, err) => {
+      if (isProcessingScan) return;
+      if (result && result.text) {
+        handleScanSuccess(result.text);
+      }
+    });
   } catch (zxingErr) {
-    console.warn('ZXing 連續解碼啟動失敗', zxingErr);
+    console.warn('ZXing連續解碼啟動失敗', zxingErr);
   }
 }
 
 async function openScanner(target) {
   if (!checkCameraEnvironment()) return;
 
-  // 先確保前次相機串流已完全釋放
   stopActiveCamera({ hideOverlay: false });
 
   scanTarget = target;
-  const isHwXm = isHuaweiOrXiaomiDevice();
-
   document.getElementById('scanTitle').textContent =
     target === 'staff' ? '請掃描員工證' :
     (target === 'bincard' ? '請掃描貨卡條碼' : '請掃描目的地條碼');
@@ -1172,10 +1127,9 @@ async function openScanner(target) {
   const video = document.getElementById('video');
 
   try {
-    // 寫死：華為/小米優先用 640x480 減輕相機/解碼負擔，其他裝置優先 1280x720 再降級
     const stream = await acquireCameraStreamWithFallback({
-      preferredWidth: isHwXm ? 640 : 1280,
-      preferredHeight: isHwXm ? 480 : 720,
+      preferredWidth: 1280,
+      preferredHeight: 720,
       fallbackWidth: 640,
       fallbackHeight: 480
     });
@@ -1184,23 +1138,16 @@ async function openScanner(target) {
     await video.play();
   } catch (camErr) {
     console.error('相機開啟失敗:', camErr);
-    alert('無法啟動相機鏡頭，請確定已授權相機權限。');
+    alert('無法啟動鏡頭！華為/小米國行手機，請到設定 → 應用 → 瀏覽器，相機權限設為【僅在使用該應用時允許】');
     stopActiveCamera({ hideOverlay: true });
     return;
   }
 
-  // 寫死：華為/小米直接跳過原生 BarcodeDetector，直接用現有串流行 ZXing
-  if (isHwXm) {
-    startZxingOnExistingVideo(video, true);
-    return;
-  }
-
-  // 非華為/小米裝置：先檢查 Level 1 BarcodeDetector 能力與支援格式
   const usableFormats = await getSupportedNativeFormats();
   if (usableFormats.length > 0) {
     try {
       const detector = new window.BarcodeDetector({ formats: usableFormats });
-      setScannerBadge('native', false);
+      setScannerBadge('native');
 
       const cropCanvas = document.createElement('canvas');
       const cropCtx = cropCanvas.getContext('2d', { willReadFrequently: true });
@@ -1229,7 +1176,7 @@ async function openScanner(target) {
           } catch (detectErr) {
             consecutiveErrors += 1;
             if (consecutiveErrors >= MAX_NATIVE_DETECT_ERRORS) {
-              startZxingOnExistingVideo(video, false);
+              startZxingOnExistingVideo(video);
               return;
             }
           }
@@ -1241,14 +1188,13 @@ async function openScanner(target) {
       scanLoop();
       return;
     } catch (initNativeErr) {
-      console.warn('BarcodeDetector 初始化失敗，切換至 ZXing 備援', initNativeErr);
+      console.warn('BarcodeDetector初始化失敗，切換ZXing備援', initNativeErr);
     }
   }
 
-  startZxingOnExistingVideo(video, false);
+  startZxingOnExistingVideo(video);
 }
 
-// 5. 集中式相機關閉與資源釋放
 function stopActiveCamera(options = { hideOverlay: true }) {
   isProcessingScan = true;
 
@@ -1315,7 +1261,7 @@ async function exportDeliveryArchive() {
     return;
   }
   if (typeof JSZip === "undefined") {
-    alert("打包套件載入中或連線異常，請稍後再試。");
+    alert("打包套件載入失敗；內網使用請下載zxing、jszip放到伺服器lib目錄自行托管！");
     return;
   }
 
@@ -1352,22 +1298,20 @@ async function exportDeliveryArchive() {
   const filename = `Delivery_Archive_${selectedDateInput || day}.zip`;
   const zipFile = new File([blob], filename, { type: "application/zip" });
 
-  // 優先嘗試彈出原生分享面板（Android Chrome / iOS Safari 支援傳送至 WeChat）
   if (navigator.canShare && navigator.canShare({ files: [zipFile] })) {
     try {
       await navigator.share({
-        title: '每日送貨總表與相片',
-        text: `送貨報表 (${selectedDateInput || day})，共 ${exportRecords.length} 單。`,
+        title: '每日送貨總表與相片【內地華為小米版】',
+        text: `送貨報表 (${selectedDateInput || day})，共 ${exportRecords.length} 單。華為小米如分享失敗，會自動觸發下載。`,
         files: [zipFile]
       });
       return;
     } catch (err) {
       if (err.name === 'AbortError') return;
-      console.log('系統分享受限，轉用一鍵下載', err);
+      console.log('國行手機分享ZIP失敗，切直接下載', err);
     }
   }
 
-  // Android 瀏覽器若封鎖直接分享 zip，自動觸發下載並顯示醒目下載大掣
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -1379,7 +1323,7 @@ async function exportDeliveryArchive() {
   const downloadArea = document.getElementById('downloadArea');
   downloadArea.innerHTML = `
     <div style="background: #f0fdf4; border: 3px solid #10b981; padding: 18px; border-radius: 16px; text-align: center; margin-top: 12px;">
-      <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: #065f46;">✅ 壓縮檔已自動下載至手機！<br>如未開始下載，請按下方綠色大掣：</p>
+      <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: #065f46;">✅壓縮檔已觸發下載！華為/小米內地版分享檔案大多失敗，務必確認手機已保存ZIP備份！<br>如未開始下載，請按下方綠色大掣：</p>
       <a href="${url}" download="${filename}" style="display: block; background: #059669; color: white; padding: 18px; border-radius: 14px; font-weight: 900; text-decoration: none; font-size: 20px;">
         📥 點擊儲存報表壓縮檔 (${filename})
       </a>

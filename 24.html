@@ -438,6 +438,9 @@
     <button id="twork" class="active" onclick="tab('work')">📝 開始送貨</button>
     <button id="thistory" onclick="tab('history')">📋 歷史記錄</button>
   </div>
+  <div id="storageInfo" style="padding: 10px 20px; background: #f1f5f9; border-bottom: 1px solid #cbd5e1; font-size: 14px; color: #334155; font-weight: bold;">
+    💾 沙箱空間：計算中...
+  </div>
 
   <main id="work" style="padding: 20px;">
     <section class="card">
@@ -601,6 +604,56 @@ async function idbRemove(k) {
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
+}
+
+
+async function updateStorageEstimate() {
+  const el = document.getElementById('storageInfo');
+  if (!el) return;
+  let totalPhotoBytes = 0;
+  let totalPhotoCount = 0;
+  for (const r of records) {
+    if (Array.isArray(r.photos)) {
+      for (const p of r.photos) {
+        if (typeof p === 'string') {
+          const comma = p.indexOf(',');
+          const b64 = comma !== -1 ? p.slice(comma + 1) : p;
+          totalPhotoBytes += Math.floor(b64.length * 0.75);
+          totalPhotoCount += 1;
+        }
+      }
+    }
+  }
+  const avgPhotoBytes = totalPhotoCount > 0 ? (totalPhotoBytes / totalPhotoCount) : (180 * 1024);
+
+  if (navigator.storage && navigator.storage.estimate) {
+    try {
+      const est = await navigator.storage.estimate();
+      const usage = est.usage || 0;
+      const quota = est.quota || 0;
+      const usedMB = (usage / (1024 * 1024)).toFixed(1);
+      const quotaMB = quota > 0 ? (quota / (1024 * 1024)).toFixed(0) : '?';
+      const pct = quota > 0 ? Math.min(100, Math.round((usage / quota) * 100)) : 0;
+      const freeBytes = quota > usage ? (quota - usage) : 0;
+      const estPhotosLeft = quota > 0 && avgPhotoBytes > 0 ? Math.floor(freeBytes / avgPhotoBytes) : null;
+
+      let warnStyle = 'background:#f1f5f9;color:#334155;border-bottom:1px solid #cbd5e1;';
+      let warnPrefix = '💾 沙箱空間：';
+      if (pct >= 85 || (estPhotosLeft !== null && estPhotosLeft < 50)) {
+        warnStyle = 'background:#fee2e2;color:#991b1b;border-bottom:2px solid #ef4444;';
+        warnPrefix = '🚨 沙箱快滿：';
+      } else if (pct >= 70) {
+        warnStyle = 'background:#fef3c7;color:#92400e;border-bottom:2px solid #f59e0b;';
+        warnPrefix = '⚠️ 沙箱提醒：';
+      }
+      el.setAttribute('style', 'padding:10px 20px;font-size:14px;font-weight:bold;' + warnStyle);
+      const leftText = estPhotosLeft !== null ? `｜約可再影 <b>${estPhotosLeft}</b> 張` : '';
+      el.innerHTML = `${warnPrefix}已用 <b>${usedMB} MB</b> / ${quotaMB} MB (${pct}%) ${leftText}`;
+      return;
+    } catch (e) {}
+  }
+  const usedMB = (totalPhotoBytes / (1024 * 1024)).toFixed(1);
+  el.innerHTML = `💾 沙箱相片估算：已用約 <b>${usedMB} MB</b> (${totalPhotoCount} 張)`;
 }
 
 function playBeep() {
@@ -899,6 +952,7 @@ async function completeDelivery(shareToWeChat = false) {
   photos = [];
   renderPhotos();
   updateCountDisplay();
+  updateStorageEstimate();
 
   const succ = document.getElementById('success');
   succ.classList.remove('hidden');
@@ -971,6 +1025,7 @@ async function adminClearRecords() {
     await idbRemove(key);
     renderHistory();
     updateCountDisplay();
+    updateStorageEstimate();
     alert('已成功清空所有歷史記錄與相片空間！');
   } else if (pwd !== null) {
     alert('密碼錯誤！');

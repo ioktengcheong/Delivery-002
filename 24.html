@@ -647,8 +647,7 @@ async function updateStorageEstimate() {
         warnPrefix = '⚠️ 沙箱提醒：';
       }
       el.setAttribute('style', 'padding:10px 20px;font-size:14px;font-weight:bold;' + warnStyle);
-      const leftText = estPhotosLeft !== null ? `｜約可再影 <b>${estPhotosLeft}</b> 張` : '';
-      el.innerHTML = `${warnPrefix}已用 <b>${usedMB} MB</b> / ${quotaMB} MB (${pct}%) ${leftText}`;
+      el.innerHTML = `${warnPrefix}已用 <b>${usedMB} MB</b> / ${quotaMB} MB (${pct}%)`;
       return;
     } catch (e) {}
   }

@@ -606,25 +606,22 @@ async function idbRemove(k) {
   });
 }
 
+function deleteDatabaseAsync(name) {
+  return new Promise((resolve) => {
+    try {
+      const req = indexedDB.deleteDatabase(name);
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => resolve(false);
+      req.onblocked = () => resolve(false);
+    } catch (e) {
+      resolve(false);
+    }
+  });
+}
 
 async function updateStorageEstimate() {
   const el = document.getElementById('storageInfo');
   if (!el) return;
-  let totalPhotoBytes = 0;
-  let totalPhotoCount = 0;
-  for (const r of records) {
-    if (Array.isArray(r.photos)) {
-      for (const p of r.photos) {
-        if (typeof p === 'string') {
-          const comma = p.indexOf(',');
-          const b64 = comma !== -1 ? p.slice(comma + 1) : p;
-          totalPhotoBytes += Math.floor(b64.length * 0.75);
-          totalPhotoCount += 1;
-        }
-      }
-    }
-  }
-  const avgPhotoBytes = totalPhotoCount > 0 ? (totalPhotoBytes / totalPhotoCount) : (180 * 1024);
 
   if (navigator.storage && navigator.storage.estimate) {
     try {
@@ -634,12 +631,10 @@ async function updateStorageEstimate() {
       const usedMB = (usage / (1024 * 1024)).toFixed(1);
       const quotaMB = quota > 0 ? (quota / (1024 * 1024)).toFixed(0) : '?';
       const pct = quota > 0 ? Math.min(100, Math.round((usage / quota) * 100)) : 0;
-      const freeBytes = quota > usage ? (quota - usage) : 0;
-      const estPhotosLeft = quota > 0 && avgPhotoBytes > 0 ? Math.floor(freeBytes / avgPhotoBytes) : null;
 
       let warnStyle = 'background:#f1f5f9;color:#334155;border-bottom:1px solid #cbd5e1;';
       let warnPrefix = '💾 沙箱空間：';
-      if (pct >= 85 || (estPhotosLeft !== null && estPhotosLeft < 50)) {
+      if (pct >= 85) {
         warnStyle = 'background:#fee2e2;color:#991b1b;border-bottom:2px solid #ef4444;';
         warnPrefix = '🚨 沙箱快滿：';
       } else if (pct >= 70) {
@@ -651,8 +646,13 @@ async function updateStorageEstimate() {
       return;
     } catch (e) {}
   }
-  const usedMB = (totalPhotoBytes / (1024 * 1024)).toFixed(1);
-  el.innerHTML = `💾 沙箱相片估算：已用約 <b>${usedMB} MB</b> (${totalPhotoCount} 張)`;
+
+  let realBytes = 0;
+  try {
+    realBytes = new Blob([JSON.stringify(records)]).size;
+  } catch (e) {}
+  const usedMB = (realBytes / (1024 * 1024)).toFixed(1);
+  el.innerHTML = `💾 沙箱空間：已用 <b>${usedMB} MB</b>`;
 }
 
 function playBeep() {
@@ -688,6 +688,7 @@ async function init() {
     console.error('IndexedDB 讀取失敗', e);
   }
   document.getElementById('exportDate').value = new Date().toISOString().slice(0, 10);
+  updateStorageEstimate();
 }
 init();
 
@@ -1021,11 +1022,49 @@ async function adminClearRecords() {
   const pwd = prompt('請輸入管理員密碼以清空記錄：');
   if (pwd === '888888') {
     records = [];
-    await idbRemove(key);
+    runner = null;
+    binCard = null;
+    isNonHub = false;
+    destination = null;
+    photos = [];
+    resetBinCard();
+    renderPhotos();
+
+    try {
+      const db = await getDB();
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).clear();
+      await new Promise((resolve) => {
+        tx.oncomplete = resolve;
+        tx.onerror = resolve;
+      });
+      db.close();
+    } catch (e) {}
+    dbPromise = null;
+    await deleteDatabaseAsync(DB_NAME);
+
+    try {
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(key)) keysToRemove.push(k);
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    } catch (e) {}
+
+    if (window.caches && caches.keys) {
+      try {
+        const cKeys = await caches.keys();
+        await Promise.all(cKeys.map((ck) => caches.delete(ck)));
+      } catch (e) {}
+    }
+
     renderHistory();
     updateCountDisplay();
-    updateStorageEstimate();
-    alert('已成功清空所有歷史記錄與相片空間！');
+    await updateStorageEstimate();
+    setTimeout(updateStorageEstimate, 500);
+    setTimeout(updateStorageEstimate, 1500);
+    alert('已成功徹底清空所有歷史記錄、資料庫與沙箱空間！');
   } else if (pwd !== null) {
     alert('密碼錯誤！');
   }

@@ -1,1335 +1,1411 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>極簡送貨與驗證系統【內地華為小米專用版】</title>
-<!-- 國內鏡像替換原unpkg / cdnjs，大陸網路可直連；企業內網建議下載js檔案本地托管 -->
-<script src="https://s4.zstatic.net/npm/@zxing/library@0.20.0"></script>
-<script src="https://s4.zstatic.net/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<style>
-  :root {
-    --ink: #0f172a;
-    --cyan: #0284c7;
-    --bg: #f8fafc;
-    --muted: #64748b;
-    --ok: #059669;
-    --bad: #dc2626;
-    --wechat: #07c160;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    font-size: 18px;
-  }
-  .app {
-    max-width: 560px;
-    margin: auto;
-    min-height: 100vh;
-    background: #fff;
-    padding-bottom: 40px;
-  }
-  .head {
-    background: #0f172a;
-    color: #fff;
-    padding: 24px;
-  }
-  .eyebrow {
-    color: #38bdf8;
-    font-size: 15px;
-    font-weight: 900;
-    letter-spacing: .1em;
-  }
-  .head h1 {
-    font-size: 26px;
-    margin: 6px 0 16px;
-  }
-  .runner {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(255,255,255,0.1);
-    padding: 16px;
-    border-radius: 16px;
-    font-size: 18px;
-  }
-  .switch-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  .switch-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-  }
-  .tabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    border-bottom: 2px solid #cbd5e1;
-  }
-  .tabs button {
-    background: #fff;
-    border: 0;
-    padding: 18px;
-    font-size: 18px;
-    font-weight: 900;
-    color: #64748b;
-    cursor: pointer;
-  }
-  .tabs button.active {
-    color: #0f172a;
-    border-bottom: 4px solid var(--cyan);
-    background: #f0f9ff;
-  }
-  .card {
-    border: 2px solid #cbd5e1;
-    border-radius: 20px;
-    padding: 20px;
-    margin-bottom: 20px;
-    background: #fff;
-  }
-  .step {
-    font-size: 14px;
-    color: #0284c7;
-    font-weight: 900;
-    letter-spacing: .05em;
-  }
-  .title {
-    font-size: 22px;
-    font-weight: 900;
-    margin: 4px 0 8px;
-    color: #0f172a;
-  }
-  .hint {
-    font-size: 15px;
-    color: var(--muted);
-    line-height: 1.5;
-  }
-  .row {
-    display: flex;
-    gap: 10px;
-    margin-top: 16px;
-    width: 100%;
-  }
-  .row input, .row select {
-    flex: 1;
-    min-width: 0;
-    background: #f1f5f9;
-    border: 2px solid #cbd5e1;
-    border-radius: 16px;
-    padding: 16px;
-    font-size: 18px;
-    outline: none;
-    font-weight: bold;
-  }
-  .status {
-    margin-top: 12px;
-    padding: 14px 16px;
-    border-radius: 14px;
-    font-weight: 900;
-    font-size: 17px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .ok {
-    background: #d1fae5;
-    color: #065f46;
-    border: 2px solid #10b981;
-  }
-  .bad {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 2px solid #ef4444;
-  }
-  .tag-nonhub {
-    display: inline-block;
-    background: #f59e0b;
-    color: #fff;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: bold;
-    margin-left: 8px;
-  }
-  .tag-type {
-    display: inline-block;
-    background: #0284c7;
-    color: #fff;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: bold;
-    margin-left: 8px;
-  }
-  .camera {
-    width: 100%;
-    height: 100px;
-    border: 3px dashed #94a3b8;
-    border-radius: 16px;
-    background: #f8fafc;
-    font-size: 18px;
-    color: #334155;
-    font-weight: 900;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 14px;
-    cursor: pointer;
-  }
-  .photos {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-top: 14px;
-  }
-  .photo {
-    position: relative;
-    width: 80px;
-    height: 80px;
-  }
-  .photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 12px;
-    border: 2px solid #cbd5e1;
-    cursor: pointer;
-  }
-  .photo button {
-    position: absolute;
-    right: -6px;
-    top: -6px;
-    border: 0;
-    border-radius: 50%;
-    background: #000;
-    color: #fff;
-    width: 26px;
-    height: 26px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-  }
-  .btn-group {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 20px;
-  }
-  .complete-btn {
-    width: 100%;
-    border: 0;
-    border-radius: 16px;
-    background: var(--ok);
-    color: #fff;
-    font-weight: 900;
-    padding: 18px;
-    font-size: 20px;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  }
-  .wechat-btn {
-    width: 100%;
-    border: 0;
-    border-radius: 16px;
-    background: var(--wechat);
-    color: #fff;
-    font-weight: 900;
-    padding: 18px;
-    font-size: 20px;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  }
-  .history-wechat-btn {
-    width: 100%;
-    border: 0;
-    border-radius: 12px;
-    background: var(--wechat);
-    color: #fff;
-    font-weight: 900;
-    padding: 12px;
-    font-size: 16px;
-    cursor: pointer;
-    margin-top: 12px;
-  }
-  button:disabled {
-    background: #e2e8f0 !important;
-    color: #94a3b8 !important;
-    cursor: not-allowed;
-    box-shadow: none !important;
-  }
-  .button-action {
-    background: #fff;
-    border: 3px solid #0284c7;
-    color: #0284c7;
-    padding: 16px;
-    border-radius: 16px;
-    font-weight: 900;
-    font-size: 18px;
-    text-align: center;
-    cursor: pointer;
-  }
-  .export-btn {
-    width: 100%;
-    border: 0;
-    border-radius: 16px;
-    background: #059669;
-    color: #fff;
-    font-weight: 900;
-    padding: 16px;
-    font-size: 18px;
-    cursor: pointer;
-    text-align: center;
-    margin-top: 14px;
-  }
-  .admin-btn {
-    width: 100%;
-    border: 0;
-    border-radius: 16px;
-    background: #dc2626;
-    color: #fff;
-    font-weight: 900;
-    padding: 16px;
-    font-size: 18px;
-    cursor: pointer;
-    text-align: center;
-    margin-top: 14px;
-  }
-  .hidden { display: none !important; }
-  .overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.85);
-    z-index: 20;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .scanbox {
-    width: min(100%, 500px);
-    background: #fff;
-    border-radius: 24px;
-    padding: 20px;
-  }
-  .video-wrapper {
-    position: relative;
-    width: 100%;
-    height: 300px;
-    border-radius: 16px;
-    overflow: hidden;
-    background: #000;
-  }
-  .video-wrapper video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  .scan-reticle {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 72%;
-    height: 90px;
-    border: 3px solid #38bdf8;
-    border-radius: 12px;
-    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52);
-    pointer-events: none;
-    z-index: 2;
-  }
-  .scan-laser {
-    position: absolute;
-    top: 50%;
-    left: 6%;
-    right: 6%;
-    height: 2px;
-    background: #ef4444;
-    box-shadow: 0 0 8px #ef4444;
-    animation: laserScan 1.6s infinite ease-in-out;
-  }
-  @keyframes laserScan {
-    0%, 100% { transform: translateY(-28px); }
-    50% { transform: translateY(28px); }
-  }
-  .engine-badge {
-    display: inline-block;
-    font-size: 12px;
-    font-weight: 800;
-    padding: 3px 8px;
-    border-radius: 6px;
-    background: #e0f2fe;
-    color: #0369a1;
-    margin-bottom: 8px;
-  }
-  .scanbox h3 { font-size: 22px; margin: 4px 0 8px; text-align: center; }
-  .success {
-    position: fixed;
-    left: 20px; right: 20px; bottom: 24px;
-    max-width: 500px; margin: auto;
-    background: #059669; color: white;
-    padding: 18px; border-radius: 18px;
-    font-weight: 900; font-size: 20px;
-    z-index: 30; text-align: center;
-    box-shadow: 0 10px 15px rgba(0,0,0,0.2);
-  }
-  .login {
-    min-height: 100vh; background: #0f172a;
-    display: flex; align-items: center; justify-content: center; padding: 20px;
-  }
-  .loginbox { background: #fff; padding: 30px; border-radius: 28px; width: 100%; max-width: 460px; }
-  .login button.primary-btn {
-    width: 100%; margin-top: 20px; background: #0f172a; color: #fff; border: 0;
-    padding: 18px; border-radius: 16px; font-weight: 900; font-size: 20px; cursor: pointer;
-  }
-  .warn-domestic{
-    background:#fff3cd;color:#856404;padding:12px 14px;border-radius:12px;border:2px solid #ffeeba;margin-bottom:12px;font-weight:bold;font-size:14px;
-  }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>極簡送貨與驗證系統（中國手機相容版）</title>
+  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    :root {
+      --ink: #0f172a;
+      --cyan: #0284c7;
+      --bg: #f8fafc;
+      --muted: #64748b;
+      --ok: #059669;
+      --bad: #dc2626;
+      --wechat: #07c160;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 18px;
+    }
+    .app {
+      max-width: 560px;
+      margin: auto;
+      min-height: 100vh;
+      background: #fff;
+      padding-bottom: 64px;
+    }
+    .head {
+      background: #0f172a;
+      color: #fff;
+      padding: 20px;
+    }
+    .eyebrow {
+      color: #38bdf8;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+    }
+    h1 {
+      font-size: 24px;
+      margin: 6px 0 12px;
+    }
+    .runner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 14px 16px;
+      border-radius: 16px;
+      font-size: 17px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .switch-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 2px solid #cbd5e1;
+    }
+    .tabs button {
+      background: #fff;
+      border: 0;
+      padding: 16px;
+      font-size: 18px;
+      font-weight: 900;
+      color: #64748b;
+      cursor: pointer;
+    }
+    .tabs button.active {
+      color: #0f172a;
+      border-bottom: 4px solid var(--cyan);
+      background: #f0f9ff;
+    }
+    .card {
+      border: 2px solid #cbd5e1;
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 18px;
+      background: #fff;
+    }
+    .step {
+      color: #0284c7;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      font-size: 15px;
+    }
+    .title {
+      font-size: 21px;
+      font-weight: 900;
+      margin: 4px 0 8px;
+    }
+    .hint {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      width: 100%;
+    }
+    .row input, .row select {
+      flex: 1;
+      min-width: 0;
+      background: #f1f5f9;
+      border: 2px solid #cbd5e1;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .status {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-weight: 900;
+      font-size: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .ok {
+      background: #d1fae5;
+      color: #065f46;
+      border: 2px solid #10b981;
+    }
+    .bad {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 2px solid #ef4444;
+    }
+    .tag-nonhub {
+      display: inline-block;
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      margin-left: 8px;
+      background: #f59e0b;
+    }
+    .tag-type {
+      background: #0284c7;
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+    .camera {
+      width: 100%;
+      height: 96px;
+      border: 3px dashed #94a3b8;
+      border-radius: 16px;
+      background: #f8fafc;
+      font-size: 18px;
+      color: #334155;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 12px;
+      cursor: pointer;
+    }
+    .photos {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .photo {
+      position: relative;
+      width: 80px;
+      height: 80px;
+    }
+    .photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 2px solid #cbd5e1;
+    }
+    .photo button {
+      position: absolute;
+      right: -6px;
+      top: -6px;
+      border: 0;
+      border-radius: 50%;
+      background: #000;
+      color: #fff;
+      width: 26px;
+      height: 26px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .complete-btn, .wechat-btn, .export-btn, .admin-btn, .primary-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 16px;
+      color: #fff;
+      font-weight: 900;
+      padding: 16px;
+      font-size: 19px;
+      cursor: pointer;
+    }
+    .complete-btn { background: var(--ok); }
+    .wechat-btn { background: var(--wechat); }
+    .export-btn { background: var(--cyan); }
+    .admin-btn { background: #dc2626; }
+    .primary-btn { background: #0f172a; margin-top: 16px; }
+    .history-wechat-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      background: var(--wechat);
+      color: #fff;
+      font-weight: 900;
+      padding: 12px;
+      font-size: 16px;
+      margin-top: 12px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #e2e8f0 !important;
+      color: #94a3b8 !important;
+      cursor: not-allowed;
+    }
+    .button-action {
+      background: #fff;
+      border: 3px solid #0284c7;
+      color: #0284c7;
+      padding: 14px 16px;
+      border-radius: 16px;
+      font-weight: 900;
+      font-size: 17px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .hidden { display: none !important; }
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 20;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .scanbox {
+      width: min(100%, 500px);
+      background: #fff;
+      border-radius: 24px;
+      padding: 20px;
+      max-height: 94vh;
+      overflow: auto;
+    }
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      height: 300px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #000;
+    }
+    .video-wrapper video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .scan-reticle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 72%;
+      height: 90px;
+      border: 3px solid #38bdf8;
+      border-radius: 12px;
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52);
+      pointer-events: none;
+    }
+    .scan-laser {
+      position: absolute;
+      top: 50%;
+      left: 6%;
+      right: 6%;
+      height: 2px;
+      background: #ef4444;
+      box-shadow: 0 0 8px #ef4444;
+      animation: laserScan 1.6s infinite ease-in-out;
+    }
+    @keyframes laserScan {
+      0%, 100% { transform: translateY(-28px); }
+      50% { transform: translateY(28px); }
+    }
+    .engine-badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #e0f2fe;
+      color: #0369a1;
+      margin-bottom: 8px;
+    }
+    .scanbox h3 {
+      font-size: 21px;
+      margin: 4px 0 8px;
+      text-align: center;
+    }
+    .system-camera-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 16px;
+      background: #f59e0b;
+      color: #fff;
+      padding: 15px;
+      font-size: 17px;
+      font-weight: 900;
+      margin-top: 12px;
+      cursor: pointer;
+    }
+    .scan-error {
+      font-size: 14px;
+      color: #991b1b;
+      background: #fee2e2;
+      padding: 10px;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+    .toast {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: 20px;
+      max-width: 520px;
+      margin: auto;
+      background: rgba(15, 23, 42, 0.95);
+      color: #fff;
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-size: 15px;
+      line-height: 1.45;
+      z-index: 40;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+      text-align: center;
+    }
+    .login {
+      min-height: 100vh;
+      background: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .loginbox {
+      background: #fff;
+      padding: 28px;
+      border-radius: 28px;
+      width: 100%;
+      max-width: 460px;
+    }
+  </style>
 </head>
 <body>
+  <div id="toast" class="toast hidden"></div>
 
-<div id="browserAlert" class="hidden" style="background:#f59e0b; color:#fff; padding:14px 16px; font-size:16px; font-weight:bold; text-align:center;">
-  ⚠️【華為/小米內地版重要提醒】切勿使用微信內置瀏覽器！點右上角「...」→在瀏覽器打開（推薦：華為瀏覽器、小米瀏覽器、Chrome）<br>
-  請到手機【設定】→應用→瀏覽器→權限，將相機設為【僅在使用該應用時允許】
-</div>
-
-<div id="login" class="login">
-  <div class="loginbox">
-    <div class="eyebrow">送貨管理系統｜內地國行手機專用</div>
-    <div class="warn-domestic">⚠️本機全部記錄存在瀏覽器本地；華為/小米系統優化清理快取會丟失數據，務必每日匯出ZIP備份！</div>
-    <h1 style="font-size: 24px;">請輸入員工編號</h1>
-    <div class="row">
-      <input type="text" inputmode="numeric" pattern="[0-9]*" id="staff" placeholder="請輸入員工編號" oninput="checkStaffSavedType()">
-      <button class="button-action" onclick="openScanner('staff')">📷 掃描</button>
-    </div>
-    <div style="margin-top: 20px;">
-      <label class="hint" style="font-weight: bold; font-size: 18px; display: block; margin-bottom: 8px; color: #0f172a;">選擇貨物類型：</label>
-      <div class="row" style="margin-top: 0;">
-        <select id="deliveryTypeSelect" style="font-size: 22px; padding: 18px; font-weight: bold; background: #f0f9ff; border: 3px solid #0284c7;">
-          <option value="街貨">街貨</option>
-          <option value="倉貨">倉貨</option>
-        </select>
-      </div>
-    </div>
-    <button class="primary-btn" onclick="login()">進入系統</button>
-  </div>
-</div>
-
-<div id="app" class="app hidden">
-  <header class="head">
-    <div class="eyebrow">精簡版送貨系統｜國行華為鴻蒙 / 小米HyperOS專用</div>
-    <h1>目的地對比與拍照驗證</h1>
-    <div class="runner">
-      <div>
-        <span style="font-size: 20px;">送貨員：<b id="runner" style="color: #38bdf8;">-</b></span><br>
-        <span style="font-size: 18px; margin-top: 6px; display: inline-block;">類型：<b id="runnerType" style="color: #38bdf8;">-</b> <span onclick="openChangeTypeModal()" style="font-size: 16px; text-decoration: underline; cursor: pointer; margin-left: 8px; color: #38bdf8; font-weight: bold;">✏️ 更改</span></span>
-      </div>
-      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
-        <span style="font-size: 17px;">今日已送：<b id="transCount" style="color: #38bdf8;">0</b> 單</span>
-        <button class="switch-btn" onclick="logout()" style="font-size: 16px; padding: 8px 14px;">🔄 重新登入</button>
-      </div>
-    </div>
-  </header>
-
-  <div class="tabs">
-    <button id="twork" class="active" onclick="tab('work')">📝 開始送貨</button>
-    <button id="thistory" onclick="tab('history')">📋 歷史記錄</button>
+  <div id="browserAlert" class="hidden" style="background:#f59e0b;color:#fff;padding:12px 16px;font-size:15px;font-weight:bold;text-align:center;">
+    如即時相機不能使用，請直接使用「系統相機掃描」。
   </div>
 
-  <main id="work" style="padding: 20px;">
-    <div class="warn-domestic">💡華為手機掃描模糊提示：若畫面模糊，手機稍微遠離條碼，不要貼太近；系統儲存空間快滿時務必匯出備份ZIP！</div>
-    <section class="card">
-      <div class="step">第一步</div>
-      <div class="title">掃描貨卡條碼 (送貨點)</div>
-      <div class="button-action" style="margin-top: 10px;" onclick="openScanner('bincard')">
-        📷 掃描貨卡 / 送貨點條碼
+  <div id="login" class="login">
+    <div class="loginbox">
+      <div class="eyebrow">送貨管理系統</div>
+      <h1 style="font-size:24px;color:#0f172a;">請輸入人員工號</h1>
+      <div class="row">
+        <input id="staff" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="請輸入人員工號" oninput="checkStaffSavedType()" />
+        <button class="button-action" type="button" onclick="openScanner('staff')">掃描</button>
       </div>
-      <div id="binCardStatus"></div>
-    </section>
-
-    <section id="destCard" class="card">
-      <div class="step">第二步</div>
-      <div class="title">驗證目的地條碼</div>
-      <div class="hint">必須與第一步刷入的貨卡目的地一致。</div>
-      <div class="button-action" style="margin-top: 10px;" onclick="openScanner('dest')">
-        📍 掃描目的地條碼
+      <div style="margin-top:18px;">
+        <label class="hint" style="font-weight:bold;color:#0f172a;display:block;margin-bottom:8px;">選擇貨物類型：</label>
+        <div class="row" style="margin-top:0;">
+          <select id="deliveryTypeSelect">
+            <option value="街貨">街貨</option>
+            <option value="倉貨">倉貨</option>
+          </select>
+        </div>
       </div>
-      <div id="destStatus"></div>
-    </section>
-
-    <section class="card">
-      <div class="step" id="photoStepTitle">第三步</div>
-      <div class="title">拍照存證</div>
-      <div class="camera" onclick="openProofCamera()">
-        📸 點擊開啟相機拍照
-      </div>
-      <div id="photos" class="photos"></div>
-
-      <div class="btn-group">
-        <button id="completeBtn" class="complete-btn" disabled onclick="completeDelivery(false)">✅ 完成送貨</button>
-        <button id="wechatBtn" class="wechat-btn" disabled onclick="completeDelivery(true)">💬 完成並分享至 WeChat (內地手機多數只能複製文字，相片手動貼)</button>
-      </div>
-    </section>
-  </main>
-
-  <main id="history" class="hidden" style="padding: 20px;">
-    <div class="warn-domestic">⚠️【重要】華為/小米內地版系統會自動清理瀏覽器本地數據，建議每日下班前匯出ZIP壓縮檔備份！</div>
-    <div class="row">
-      <input id="search" placeholder="🔍 搜尋貨卡 / 目的地 / 類型" oninput="renderHistory()">
-    </div>
-    <div class="row">
-      <input type="date" id="exportDate">
-    </div>
-    <button class="export-btn" onclick="exportDeliveryArchive()" style="background: var(--wechat);">📤 匯出並傳送至 WeChat (.zip)</button>
-    <div id="downloadArea" style="margin-top: 12px;"></div>
-
-    <button class="admin-btn" onclick="adminClearRecords()" style="margin-top: 14px;">🛡️ 管理員清空記錄 (Admin，務必先匯出備份)</button>
-    <div id="records" style="margin-top: 20px;"></div>
-  </main>
-</div>
-
-<div id="typeModal" class="overlay hidden">
-  <div class="scanbox" style="text-align: center; padding: 30px;">
-    <h3 style="font-size: 24px; margin-bottom: 20px;">請選擇要更改的貨物類型</h3>
-    <div style="display: flex; flex-direction: column; gap: 16px;">
-      <button onclick="selectNewType('街貨')" style="background: #0284c7; color: white; border: none; padding: 22px; border-radius: 16px; font-size: 24px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">街貨</button>
-      <button onclick="selectNewType('倉貨')" style="background: #059669; color: white; border: none; padding: 22px; border-radius: 16px; font-size: 24px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">倉貨</button>
-      <button onclick="closeChangeTypeModal()" style="background: #64748b; color: white; border: none; padding: 16px; border-radius: 16px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px;">取消</button>
+      <button class="primary-btn" type="button" onclick="login()">進入系統</button>
     </div>
   </div>
-</div>
 
-<div id="imageModal" class="overlay hidden" onclick="closeImageModal()">
-  <div style="max-width: 90%; max-height: 90%; text-align: center;">
-    <img id="modalImg" style="max-width: 100%; max-height: 85vh; border-radius: 16px;" src="">
-    <p style="color: #fff; margin-top: 14px; font-size: 18px; font-weight: bold;">點擊任意處關閉圖片</p>
+  <div id="app" class="app hidden">
+    <header class="head">
+      <div class="eyebrow">送貨系統 · Scanner V4</div>
+      <h1>目的地比對與拍照驗證</h1>
+      <div class="runner">
+        <div>
+          送貨員：<b id="runner" style="color:#38bdf8;"></b>
+          <span>｜類型：<b id="runnerType" style="color:#38bdf8;"></b></span>
+          <span onclick="openChangeTypeModal()" style="text-decoration:underline;cursor:pointer;color:#38bdf8;font-weight:bold;margin-left:6px;">更改</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span>今日已送：<b id="transCount" style="color:#38bdf8;">0</b> 單</span>
+          <button class="switch-btn" type="button" onclick="logout()">重新登入</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button id="twork" class="active" type="button" onclick="tab('work')">開始送貨</button>
+      <button id="thistory" type="button" onclick="tab('history')">歷史記錄</button>
+    </div>
+
+    <main id="work" style="padding:20px;">
+      <section class="card">
+        <div class="step">第一步</div>
+        <div class="title">掃描貨卡條碼（送貨點）</div>
+        <div class="row" style="margin-top:10px;">
+          <input id="binInput" type="text" placeholder="輸入或掃描貨卡條碼" oninput="applyBinCard(this.value)" />
+          <button class="button-action" type="button" onclick="openScanner('bincard')">掃描貨卡條碼</button>
+        </div>
+        <div id="binCardStatus"></div>
+      </section>
+
+      <section id="destCard" class="card hidden">
+        <div class="step">第二步</div>
+        <div class="title">驗證目的地條碼</div>
+        <div class="hint">必須與第一步刷入的貨卡目的地一致。</div>
+        <div class="row" style="margin-top:10px;">
+          <input id="destInput" type="text" placeholder="輸入或掃描目的地條碼" oninput="applyDestination(this.value)" />
+          <button class="button-action" type="button" onclick="openScanner('dest')">掃描目的地條碼</button>
+        </div>
+        <div id="destStatus"></div>
+      </section>
+
+      <section id="photoCard" class="card hidden">
+        <div id="photoStepTitle" class="step">第三步</div>
+        <div class="title">拍照留底</div>
+        <div class="camera" onclick="openProofCamera()">點擊開啟相機拍照</div>
+        <input id="proofSystemInput" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleProofSystemPhoto(event)" />
+        <div id="photos" class="photos"></div>
+        <div class="btn-group">
+          <button id="completeBtn" class="complete-btn" type="button" disabled onclick="completeDelivery(false)">完成送貨</button>
+          <button id="wechatBtn" class="wechat-btn" type="button" disabled onclick="completeDelivery(true)">完成並分享至 WeChat</button>
+        </div>
+      </section>
+
+      <div id="success" class="toast hidden" style="background:#059669;">送貨記錄已成功完成！</div>
+    </main>
+
+    <main id="history" class="hidden" style="padding:20px;">
+      <div class="row" style="margin-top:0;">
+        <input id="search" type="text" placeholder="搜尋貨卡／目的地／類型" oninput="renderHistory()" />
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <input type="date" id="exportDate" />
+        <button class="export-btn" type="button" style="width:auto;padding:12px 16px;font-size:16px;" onclick="exportDeliveryArchive()">匯出並傳送至 WeChat (.zip)</button>
+      </div>
+      <button class="button-action" type="button" style="width:100%;margin-top:14px;" onclick="showShareDiagnostics()">分享功能檢查</button>
+      <div id="downloadArea" style="margin-top:12px;"></div>
+      <button class="admin-btn" type="button" style="margin-top:14px;" onclick="adminClearRecords()">管理員清空記錄 (Admin)</button>
+      <div id="records" style="margin-top:20px;"></div>
+    </main>
   </div>
-</div>
 
-<div id="scanner" class="overlay hidden">
-  <div class="scanbox" style="text-align: center;">
-    <span id="engineBadge" class="engine-badge">⚡ 偵測引擎初始化...</span>
-    <h3 id="scanTitle">對準條碼進行掃描</h3>
-    <div class="video-wrapper">
-      <video id="video" autoplay muted playsinline></video>
-      <div class="scan-reticle">
-        <div class="scan-laser"></div>
+  <div id="typeModal" class="overlay hidden">
+    <div class="scanbox" style="text-align:center;padding:28px;">
+      <h3>請選擇要更改的貨物類型</h3>
+      <div style="display:flex;flex-direction:column;gap:14px;margin-top:16px;">
+        <button class="button-action" type="button" onclick="selectNewType('街貨')">街貨</button>
+        <button class="button-action" type="button" onclick="selectNewType('倉貨')">倉貨</button>
+        <button class="button-action" type="button" style="border-color:#94a3b8;color:#475569;" onclick="closeChangeTypeModal()">取消</button>
       </div>
     </div>
-    <p id="scanMsg" class="hint" style="text-align: center; margin-top: 10px; font-weight: bold; color: #0f172a;">請將【單一目標條碼】放入藍色框內｜華為手機畫面模糊請拿遠一點</p>
-    <button class="button-action" style="width:100%; margin-top:12px;" onclick="closeScanner()">關閉相機</button>
   </div>
-</div>
 
-<div id="proofCamera" class="overlay hidden">
-  <div class="scanbox">
-    <h3>即時拍照存證</h3>
-    <video id="proofVideo" autoplay muted playsinline style="width:100%; height:300px; object-fit:cover; border-radius:16px; background:#000;"></video>
-    <canvas id="proofCanvas" class="hidden"></canvas>
-    <div class="row" style="margin-top: 20px;">
-      <button class="button-action" style="flex:1;" onclick="closeProofCamera()">取消</button>
-      <button class="complete-btn" style="flex:2;" onclick="takeProofPhoto()">📸 拍照</button>
+  <div id="imageModal" class="overlay hidden" onclick="closeImageModal()">
+    <div style="max-width:90%;max-height:90%;text-align:center;">
+      <img id="modalImg" src="" alt="預覽圖片" style="max-width:100%;max-height:85vh;border-radius:16px;" />
+      <p style="color:#fff;margin-top:10px;">點擊任意處關閉圖片</p>
     </div>
   </div>
-</div>
 
-<div id="success" class="success hidden">🎉 送貨記錄已成功完成！</div>
-
-<script>
-let runner = null;
-let binCard = null;
-let isNonHub = false;
-let destination = null;
-let photos = [];
-let scanTarget = null;
-let codeReader = null;
-let isProcessingScan = false;
-let nativeScanLoopId = null;
-let activeScanStream = null;
-let key = 'simple_delivery_v3_mainland_cn';
-let records = JSON.parse(localStorage.getItem(key) || '[]');
-let day = new Date().toLocaleDateString('sv-SE');
-
-const REQUIRED_BARCODE_FORMATS = ['code_128', 'code_39', 'ean_13', 'qr_code', 'codabar', 'itf'];
-const MAX_NATIVE_DETECT_ERRORS = 3;
-
-function playBeep() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(1050, ctx.currentTime);
-    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.12);
-  } catch (e) {}
-}
-
-function init() {
-  const ua = navigator.userAgent.toLowerCase();
-  // 增強微信X5內核檢測，國行手機微信內置瀏覽器強彈提示
-  if (ua.indexOf('micromessenger') !== -1 || ua.indexOf('wv') !== -1 || ua.indexOf('x5')!==-1) {
-    document.getElementById('browserAlert').classList.remove('hidden');
-  }
-
-  const r = JSON.parse(localStorage.getItem(key + '_runner') || 'null');
-  if (r && r.date === day) {
-    runner = r;
-    showApp();
-  }
-  document.getElementById('exportDate').value = new Date().toISOString().slice(0, 10);
-}
-init();
-
-function checkStaffSavedType() {
-  const staffId = document.getElementById('staff').value.trim();
-  if (!staffId) return;
-  const savedType = localStorage.getItem(key + '_type_' + staffId);
-  if (savedType) {
-    document.getElementById('deliveryTypeSelect').value = savedType;
-  }
-}
-
-function login() {
-  const staff = document.getElementById('staff').value.trim();
-  if (!staff) return alert('請輸入員工編號');
-  const deliveryType = document.getElementById('deliveryTypeSelect').value;
-
-  localStorage.setItem(key + '_type_' + staff, deliveryType);
-
-  runner = { staffId: staff, deliveryType: deliveryType, date: day };
-  localStorage.setItem(key + '_runner', JSON.stringify(runner));
-  showApp();
-}
-
-function logout() {
-  localStorage.removeItem(key + '_runner');
-  runner = null;
-  document.getElementById('staff').value = '';
-  document.getElementById('app').classList.add('hidden');
-  document.getElementById('login').classList.remove('hidden');
-}
-
-function showApp() {
-  document.getElementById('login').classList.add('hidden');
-  document.getElementById('app').classList.remove('hidden');
-  document.getElementById('runner').textContent = runner.staffId;
-  document.getElementById('runnerType').textContent = runner.deliveryType || '街貨';
-  updateCountDisplay();
-}
-
-function openChangeTypeModal() {
-  document.getElementById('typeModal').classList.remove('hidden');
-}
-
-function closeChangeTypeModal() {
-  document.getElementById('typeModal').classList.add('hidden');
-}
-
-function selectNewType(newType) {
-  if (runner) {
-    runner.deliveryType = newType;
-    localStorage.setItem(key + '_type_' + runner.staffId, newType);
-    localStorage.setItem(key + '_runner', JSON.stringify(runner));
-    document.getElementById('runnerType').textContent = newType;
-  }
-  closeChangeTypeModal();
-}
-
-function applyBinCard(v) {
-  v = (v || '').trim();
-  if (!v) return;
-
-  isNonHub = v.toLowerCase().includes('non-hub');
-  binCard = { code: v, time: new Date().toLocaleString('zh-HK', {hour12: false}) };
-
-  const destCard = document.getElementById('destCard');
-  const photoStepTitle = document.getElementById('photoStepTitle');
-
-  if (isNonHub) {
-    destCard.classList.add('hidden');
-    photoStepTitle.textContent = '第二步';
-    destination = null;
-    document.getElementById('binCardStatus').innerHTML = `
-      <div class="status ok">
-        <span>✓ 貨卡: ${esc(v)} <span class="tag-nonhub">Non‑hub 免對比</span></span>
-        <b onclick="resetBinCard()" style="cursor:pointer;">×</b>
-      </div>`;
-  } else {
-    destCard.classList.remove('hidden');
-    photoStepTitle.textContent = '第三步';
-    document.getElementById('binCardStatus').innerHTML = `
-      <div class="status ok">
-        <span>✓ 貨卡: ${esc(v)}</span>
-        <b onclick="resetBinCard()" style="cursor:pointer;">×</b>
-      </div>`;
-
-    if (destination) verifyMatch();
-  }
-
-  validateForm();
-}
-
-function resetBinCard() {
-  binCard = null;
-  isNonHub = false;
-  destination = null;
-  document.getElementById('binCardStatus').innerHTML = '';
-  document.getElementById('destStatus').innerHTML = '';
-  document.getElementById('destCard').classList.remove('hidden');
-  document.getElementById('photoStepTitle').textContent = '第三步';
-  validateForm();
-}
-
-function applyDestination(v) {
-  v = (v || '').trim();
-  if (!v) return;
-  destination = { code: v, time: new Date().toLocaleString('zh-HK', {hour12: false}) };
-  verifyMatch();
-  validateForm();
-}
-
-function verifyMatch() {
-  if (!binCard) return;
-  const destStatus = document.getElementById('destStatus');
-
-  if (binCard.code.toLowerCase() === destination.code.toLowerCase()) {
-    destStatus.innerHTML = `
-      <div class="status ok">
-        <span>✓ 驗證成功 (對應一致): ${esc(destination.code)}</span>
-        <b onclick="destination=null; document.getElementById('destStatus').innerHTML=''; validateForm();" style="cursor:pointer;">×</b>
-      </div>`;
-  } else {
-    destStatus.innerHTML = `
-      <div class="status bad">
-        <span>❌ 驗證失敗：目的地不匹配！</span>
-        <b onclick="destination=null; document.getElementById('destStatus').innerHTML=''; validateForm();" style="cursor:pointer;">×</b>
-      </div>`;
-  }
-}
-
-function validateForm() {
-  let isReady = false;
-
-  if (isNonHub) {
-    isReady = binCard && photos.length > 0;
-  } else {
-    const isMatched = binCard && destination && (binCard.code.toLowerCase() === destination.code.toLowerCase());
-    isReady = isMatched && photos.length > 0;
-  }
-
-  document.getElementById('completeBtn').disabled = !isReady;
-  document.getElementById('wechatBtn').disabled = !isReady;
-}
-
-async function openProofCamera() {
-  if (!binCard) return alert('請先掃描貨卡');
-  if (!isNonHub && (!destination || binCard.code.toLowerCase() !== destination.code.toLowerCase())) {
-    return alert('請先完成目的地驗證且確保匹配成功');
-  }
-
-  if (!checkCameraEnvironment()) return;
-
-  document.getElementById('proofCamera').classList.remove('hidden');
-  try {
-    const stream = await acquireCameraStreamWithFallback({
-      preferredWidth: 1024,
-      preferredHeight: 768
-    });
-    const video = document.getElementById('proofVideo');
-    video.srcObject = stream;
-    await video.play();
-  } catch (e) {
-    alert('無法開啟相機！華為/小米用戶請到手機設定確認瀏覽器已授予相機權限【僅在使用應用時允許】');
-    closeProofCamera();
-  }
-}
-
-function takeProofPhoto() {
-  const video = document.getElementById('proofVideo');
-  const canvas = document.getElementById('proofCanvas');
-  if (!video.videoWidth) return;
-
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0);
-  // 【內地版修改】壓縮率調低到0.6，減少base64體積，減慢localStorage爆滿速度
-  photos.push(canvas.toDataURL('image/jpeg', 0.60));
-  closeProofCamera();
-  renderPhotos();
-}
-
-function closeProofCamera() {
-  const video = document.getElementById('proofVideo');
-  if (video?.srcObject) {
-    video.srcObject.getTracks().forEach(t => t.stop());
-    video.pause();
-    video.srcObject = null;
-  }
-  document.getElementById('proofCamera').classList.add('hidden');
-}
-
-function renderPhotos() {
-  document.getElementById('photos').innerHTML = photos.map((p, i) => `
-    <div class="photo">
-      <img src="${p}" onclick="showImageModal('${p}')">
-      <button onclick="photos.splice(${i}, 1); renderPhotos()">×</button>
+  <div id="scanner" class="overlay hidden">
+    <div class="scanbox" style="text-align:center;">
+      <span id="engineBadge" class="engine-badge">偵測引擎初始化...</span>
+      <h3 id="scanTitle">對準條碼進行掃描</h3>
+      <div id="liveCameraArea" class="video-wrapper">
+        <video id="video" autoplay muted playsinline></video>
+        <div class="scan-reticle">
+          <div class="scan-laser"></div>
+        </div>
+      </div>
+      <p id="scanMsg" class="hint" style="text-align:center;font-weight:bold;color:#0284c7;margin-top:10px;">請將單一目標條碼放入藍色框內</p>
+      <div id="scanError" class="scan-error hidden"></div>
+      <button class="system-camera-btn" type="button" onclick="openSystemScanner()">系統相機掃描（如無法即時掃描請用此功能）</button>
+      <input id="systemCameraInput" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleSystemScanImage(event)" />
+      <button class="button-action" type="button" style="width:100%;margin-top:12px;" onclick="closeScanner()">關閉相機</button>
     </div>
-  `).join('');
-  validateForm();
-}
+  </div>
 
-function addWatermarkToImage(dataUrl, timeStr) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
+  <div id="proofCamera" class="overlay hidden">
+    <div class="scanbox" style="text-align:center;">
+      <h3>即時拍照留底</h3>
+      <video id="proofVideo" autoplay muted playsinline style="width:100%;height:300px;object-fit:cover;border-radius:16px;background:#000;"></video>
+      <canvas id="proofCanvas" class="hidden"></canvas>
+      <div class="row">
+        <button class="complete-btn" type="button" onclick="takeProofPhoto()">拍照</button>
+        <button class="system-camera-btn" type="button" style="margin-top:0;" onclick="useSystemProofCamera()">改用系統相機</button>
+      </div>
+      <button class="button-action" type="button" style="width:100%;margin-top:12px;" onclick="closeProofCamera()">取消</button>
+    </div>
+  </div>
 
-      const text1 = "✅ 已送達";
-      const text2 = `時間: ${timeStr}`;
-      const fontSize = Math.max(26, Math.round(canvas.width / 30));
-      ctx.font = `bold ${fontSize}px sans-serif`;
+  <script>
+    const KEY = 'simple_delivery_v3';
+    const DB_NAME = 'simple_delivery_db_v3';
+    const DB_VERSION = 1;
+    const STORE_RECORDS = 'records';
 
-      const padding = 20;
-      const m1 = ctx.measureText(text1);
-      const m2 = ctx.measureText(text2);
-      const maxW = Math.max(m1.width, m2.width);
+    let dbInstance = null;
+    let runner = null;
+    let binCard = null;
+    let isNonHub = false;
+    let destination = null;
+    let photos = [];
+    let scanTarget = null;
+    let codeReader = null;
+    let isProcessingScan = false;
+    let nativeScanLoopId = null;
+    let activeScanStream = null;
+    let proofStream = null;
+    let scannerV4Timer = null;
+    let scannerV4StartedAt = 0;
+    let scannerV4Attempts = 0;
+    let scannerV4SecondaryStarted = false;
+    let records = [];
+    let today = new Date().toLocaleDateString('sv-SE');
+    let toastTimer = null;
 
-      const x = canvas.width - maxW - padding - 20;
-      const y = canvas.height - padding - fontSize * 2;
-
-      ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
-      ctx.fillRect(x - 15, y - 10, maxW + 30, fontSize * 2.8 + 15);
-
-      ctx.fillStyle = "#00ff66";
-      ctx.fillText(text1, x, y + fontSize);
-      ctx.fillStyle = "#ffffff";
-      ctx.font = `bold ${Math.round(fontSize * 0.8)}px sans-serif`;
-      ctx.fillText(text2, x, y + fontSize * 2 + 5);
-      //【內地版】水印圖片壓縮率0.62
-      resolve(canvas.toDataURL('image/jpeg', 0.62));
-    };
-    img.src = dataUrl;
-  });
-}
-
-function completeDelivery(shareToWeChat = false) {
-  const completedTime = new Date().toLocaleString('zh-HK', {hour12: false});
-  const rec = {
-    id: 'DLV-' + Date.now(),
-    runner: runner,
-    deliveryType: runner.deliveryType || '街貨',
-    binCard: binCard.code,
-    isNonHub: isNonHub,
-    destination: isNonHub ? 'Non‑hub (直達)' : destination.code,
-    photos: photos,
-    completedAt: completedTime
-  };
-
-  records.unshift(rec);
-  try {
-    localStorage.setItem(key, JSON.stringify(records));
-  } catch (err) {
-    alert('⚠️儲存空間已滿！華為小米內地版容易出現，請立刻匯出ZIP備份，再使用管理員清空舊記錄！');
-    records.pop();
-    return;
-  }
-
-  if (shareToWeChat) {
-    shareToWeChatAction(rec);
-  }
-
-  resetBinCard();
-  photos = [];
-  renderPhotos();
-  updateCountDisplay();
-
-  const succ = document.getElementById('success');
-  succ.classList.remove('hidden');
-  setTimeout(() => succ.classList.add('hidden'), 2000);
-}
-
-function dataURLtoFile(dataurl, filename) {
-  let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1];
-  let bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
-  while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
-  }
-  return new File([u8arr], filename, { type: mime });
-}
-
-async function shareToWeChatAction(rec) {
-  const textMsg = `【送貨完成記錄與照片】\n貨卡：${rec.binCard}\n類型：${rec.isNonHub ? 'Non‑hub' : '標準配送'}\n目的地：${rec.destination}\n完成時間：${rec.completedAt}`;
-
-  try {
-    let filesArray = [];
-    if (rec.photos && rec.photos.length > 0) {
-      for (let i = 0; i < rec.photos.length; i++) {
-        const watermarkedUrl = await addWatermarkToImage(rec.photos[i], rec.completedAt);
-        const file = dataURLtoFile(watermarkedUrl, `proof_${i + 1}.jpg`);
-        filesArray.push(file);
-      }
-    }
-    //【內地版增強：國行華為小米瀏覽器canShare返回true但實際傳檔失敗，優先捕獲異常】
-    if (navigator.canShare && navigator.canShare({ files: filesArray })) {
-      try {
-        await navigator.share({
-          title: '送貨完成記錄與照片',
-          text: textMsg,
-          files: filesArray
-        });
-        return;
-      } catch (errNativeShare) {
-        if (errNativeShare.name !== 'AbortError') {
-          console.warn("國行手機檔案分享失敗，切換備援複製文字", errNativeShare);
+    // --- IndexedDB 儲存層（只替換 records 儲存，保留原本 photos DataURL 結構） ---
+    function openDeliveryDB() {
+      if (dbInstance) return Promise.resolve(dbInstance);
+      return new Promise((resolve, reject) => {
+        if (!('indexedDB' in window)) {
+          reject(new Error('IndexedDB not supported'));
+          return;
         }
-      }
-    }
-    if (navigator.share) {
-      await navigator.share({
-        title: '送貨完成記錄',
-        text: textMsg
-      });
-      return;
-    }
-    throw new Error("本瀏覽器不支援分享API");
-  } catch (err) {
-    if (err.name !== 'AbortError') {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(textMsg);
-        alert('⚠️【華為/小米內地版限制】瀏覽器無法直接發送圖片檔案！文字已複製剪貼簿，請手動打開微信貼上文字，再手動附加相簿相片。');
-      } else {
-        alert(textMsg);
-      }
-    }
-  }
-}
-
-function shareHistoryRecord(id) {
-  const rec = records.find(r => r.id === id);
-  if (rec) {
-    shareToWeChatAction(rec);
-  }
-}
-
-function adminClearRecords() {
-  const pwd = prompt('請輸入管理員密碼以清空記錄：【⚠️一定要先匯出ZIP備份！】');
-  if (pwd === '888888') {
-    records = [];
-    localStorage.removeItem(key);
-    renderHistory();
-    updateCountDisplay();
-    alert('已成功清空所有歷史記錄與相片空間！');
-  } else if (pwd !== null) {
-    alert('密碼錯誤！');
-  }
-}
-
-function updateCountDisplay() {
-  document.getElementById('transCount').textContent = records.filter(r => r.runner.staffId === runner?.staffId).length;
-}
-
-function tab(x) {
-  document.getElementById('work').classList.toggle('hidden', x !== 'work');
-  document.getElementById('history').classList.toggle('hidden', x !== 'history');
-  document.getElementById('twork').classList.toggle('active', x === 'work');
-  document.getElementById('thistory').classList.toggle('active', x === 'history');
-  if (x === 'history') renderHistory();
-}
-
-function renderHistory() {
-  const q = document.getElementById('search').value.toLowerCase();
-  const filtered = records.filter(r => (r.binCard + r.destination + (r.deliveryType || '')).toLowerCase().includes(q));
-  document.getElementById('records').innerHTML = filtered.map(r => `
-    <div class="card">
-      <div style="font-size: 18px; font-weight: bold;">貨卡：${esc(r.binCard)} ${r.isNonHub ? '<span class="tag-nonhub">Non‑hub</span>':''} <span class="tag-type">${esc(r.deliveryType || '街貨')}</span></div>
-      <div class="hint">目的地：${esc(r.destination)} | 送貨員：${esc(r.runner?.staffId)}</div>
-      <div class="hint">完成時間：${esc(r.completedAt)}</div>
-      <div class="photos" style="margin-top:8px;">
-        ${r.photos.map(p => `<div class="photo"><img src="${p}" onclick="showImageModal('${p}')"></div>`).join('')}
-      </div>
-      <button class="history-wechat-btn" onclick="shareHistoryRecord('${r.id}')">💬 再次分享至 WeChat (內地手機多數只能複製文字)</button>
-    </div>
-  `).join('');
-}
-
-function showImageModal(src) {
-  document.getElementById('modalImg').src = src;
-  document.getElementById('imageModal').classList.remove('hidden');
-}
-
-function closeImageModal() {
-  document.getElementById('imageModal').classList.add('hidden');
-}
-
-function handleScanSuccess(text) {
-  if (isProcessingScan) return;
-  isProcessingScan = true;
-  playBeep();
-  if (navigator.vibrate) navigator.vibrate(100);
-
-  if (scanTarget === 'staff') {
-    document.getElementById('staff').value = text;
-    checkStaffSavedType();
-  } else if (scanTarget === 'bincard') {
-    applyBinCard(text);
-  } else if (scanTarget === 'dest') {
-    applyDestination(text);
-  }
-  stopActiveCamera();
-}
-
-function checkCameraEnvironment() {
-  if (!window.isSecureContext) {
-    alert('⚠️必須使用HTTPS安全網址，http或者本地檔案無法開啟相機！');
-    return false;
-  }
-  if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
-    alert('⚠️本瀏覽器不支援相機；華為/小米內地版請使用系統自帶瀏覽器或Chrome；請到手機設定確認瀏覽器相機權限【僅在使用該應用時允許】');
-    return false;
-  }
-  return true;
-}
-
-async function acquireCameraStreamWithFallback(options = {}) {
-  const w1 = options.preferredWidth || 1280;
-  const h1 = options.preferredHeight || 720;
-  const w2 = options.fallbackWidth || 640;
-  const h2 = options.fallbackHeight || 480;
-  // 【鴻蒙關鍵：只使用 facingMode ideal environment，禁止寫死deviceId，避免選到長焦鏡頭掃描模糊】[[(Huawei Dev...)]](https://developer.huawei.com/consumer/cn/doc/HarmonyOS-Guides/web-rtc?f_link_type=f_linkinlinenote&flow_extra=eyJpbmxpbmVfZGlzcGxheV9wb3NpdGlvbiI6MCwiZG9jX3Bvc2l0aW9uIjowLCJkb2NfaWQiOiIwOWQwMjYyMGQ2NjVlMjI5LTJjZmRlZjFiYWIxOTVkZDkifQ%3D%3D "(Huawei Dev...)")
-  const candidateConstraints = [
-    {
-      video: {
-        facingMode: { ideal: 'environment' },
-        width: { ideal: w1 },
-        height: { ideal: h1 }
-      },
-      audio: false
-    },
-    {
-      video: {
-        facingMode: { ideal: 'environment' },
-        width: { ideal: w2 },
-        height: { ideal: h2 }
-      },
-      audio: false
-    },
-    {
-      video: {
-        facingMode: 'environment'
-      },
-      audio: false
-    },
-    {
-      video: true,
-      audio: false
-    }
-  ];
-
-  let lastError = null;
-  for (const constraints of candidateConstraints) {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      if (stream) return stream;
-    } catch (err) {
-      lastError = err;
-    }
-  }
-  throw lastError || new Error('所有相機模式皆無法啟動');
-}
-
-function setScannerBadge(mode) {
-  const badge = document.getElementById('engineBadge');
-  if (!badge) return;
-  if (mode === 'native') {
-    badge.textContent = '⚡ 高速掃描模式';
-    badge.style.background = '#dcfce7';
-    badge.style.color = '#166534';
-  } else {
-    badge.textContent = '🔄 相容掃描模式';
-    badge.style.background = '#e0f2fe';
-    badge.style.color = '#0369a1';
-  }
-}
-
-async function getSupportedNativeFormats() {
-  if (typeof window.BarcodeDetector === 'undefined') return [];
-  if (typeof window.BarcodeDetector.getSupportedFormats !== 'function') {
-    return REQUIRED_BARCODE_FORMATS;
-  }
-  try {
-    const supported = await window.BarcodeDetector.getSupportedFormats();
-    if (!Array.isArray(supported) || supported.length === 0) return [];
-    const supportedSet = new Set(supported.map(f => String(f).toLowerCase()));
-    return REQUIRED_BARCODE_FORMATS.filter(f => supportedSet.has(f.toLowerCase()));
-  } catch (e) {
-    return [];
-  }
-}
-
-function startZxingOnExistingVideo(videoEl) {
-  if (isProcessingScan) return;
-  setScannerBadge('zxing');
-
-  if (nativeScanLoopId) {
-    clearTimeout(nativeScanLoopId);
-    nativeScanLoopId = null;
-  }
-
-  try {
-    if (!codeReader) {
-      codeReader = new ZXing.BrowserMultiFormatReader();
-    } else if (typeof codeReader.reset === 'function') {
-      codeReader.reset();
-    }
-
-    codeReader.decodeFromVideoElementContinuously(videoEl, (result, err) => {
-      if (isProcessingScan) return;
-      if (result && result.text) {
-        handleScanSuccess(result.text);
-      }
-    });
-  } catch (zxingErr) {
-    console.warn('ZXing連續解碼啟動失敗', zxingErr);
-  }
-}
-
-async function openScanner(target) {
-  if (!checkCameraEnvironment()) return;
-
-  stopActiveCamera({ hideOverlay: false });
-
-  scanTarget = target;
-  document.getElementById('scanTitle').textContent =
-    target === 'staff' ? '請掃描員工證' :
-    (target === 'bincard' ? '請掃描貨卡條碼' : '請掃描目的地條碼');
-
-  document.getElementById('scanner').classList.remove('hidden');
-  isProcessingScan = false;
-
-  const video = document.getElementById('video');
-
-  try {
-    const stream = await acquireCameraStreamWithFallback({
-      preferredWidth: 1280,
-      preferredHeight: 720,
-      fallbackWidth: 640,
-      fallbackHeight: 480
-    });
-    activeScanStream = stream;
-    video.srcObject = stream;
-    await video.play();
-  } catch (camErr) {
-    console.error('相機開啟失敗:', camErr);
-    alert('無法啟動鏡頭！華為/小米國行手機，請到設定 → 應用 → 瀏覽器，相機權限設為【僅在使用該應用時允許】');
-    stopActiveCamera({ hideOverlay: true });
-    return;
-  }
-
-  const usableFormats = await getSupportedNativeFormats();
-  if (usableFormats.length > 0) {
-    try {
-      const detector = new window.BarcodeDetector({ formats: usableFormats });
-      setScannerBadge('native');
-
-      const cropCanvas = document.createElement('canvas');
-      const cropCtx = cropCanvas.getContext('2d', { willReadFrequently: true });
-      let consecutiveErrors = 0;
-
-      const scanLoop = async () => {
-        if (isProcessingScan || !activeScanStream) return;
-
-        if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
-          const sw = Math.floor(video.videoWidth * 0.75);
-          const sh = Math.floor(video.videoHeight * 0.35);
-          const sx = Math.floor((video.videoWidth - sw) / 2);
-          const sy = Math.floor((video.videoHeight - sh) / 2);
-
-          cropCanvas.width = sw;
-          cropCanvas.height = sh;
-          cropCtx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
-
-          try {
-            const barcodes = await detector.detect(cropCanvas);
-            consecutiveErrors = 0;
-            if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
-              handleScanSuccess(barcodes[0].rawValue);
-              return;
-            }
-          } catch (detectErr) {
-            consecutiveErrors += 1;
-            if (consecutiveErrors >= MAX_NATIVE_DETECT_ERRORS) {
-              startZxingOnExistingVideo(video);
-              return;
-            }
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_RECORDS)) {
+            db.createObjectStore(STORE_RECORDS, { keyPath: 'id' });
           }
-        }
-
-        nativeScanLoopId = setTimeout(scanLoop, 80);
-      };
-
-      scanLoop();
-      return;
-    } catch (initNativeErr) {
-      console.warn('BarcodeDetector初始化失敗，切換ZXing備援', initNativeErr);
-    }
-  }
-
-  startZxingOnExistingVideo(video);
-}
-
-function stopActiveCamera(options = { hideOverlay: true }) {
-  isProcessingScan = true;
-
-  if (nativeScanLoopId) {
-    clearTimeout(nativeScanLoopId);
-    nativeScanLoopId = null;
-  }
-
-  if (codeReader) {
-    try {
-      codeReader.reset();
-    } catch (e) {}
-    codeReader = null;
-  }
-
-  if (activeScanStream) {
-    try {
-      activeScanStream.getTracks().forEach(t => t.stop());
-    } catch (e) {}
-    activeScanStream = null;
-  }
-
-  const video = document.getElementById('video');
-  if (video) {
-    try {
-      video.pause();
-    } catch (e) {}
-    if (video.srcObject) {
-      try {
-        video.srcObject.getTracks().forEach(t => t.stop());
-      } catch (e) {}
-      video.srcObject = null;
-    }
-  }
-
-  if (options && options.hideOverlay) {
-    document.getElementById('scanner').classList.add('hidden');
-  }
-}
-
-function closeScanner() {
-  stopActiveCamera({ hideOverlay: true });
-}
-
-function esc(s) {
-  return String(s).replace(/[&<>"']/g, m => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'} [m]));
-}
-
-async function exportDeliveryArchive() {
-  const selectedDateInput = document.getElementById('exportDate').value;
-
-  const exportRecords = records.filter(r => {
-    if (!selectedDateInput) return true;
-    const parts = (r.completedAt || '').split(' ')[0].split('/');
-    let rDate = r.completedAt || '';
-    if (parts.length === 3) {
-      rDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-    }
-    return rDate === selectedDateInput;
-  });
-
-  if (exportRecords.length === 0) {
-    alert("所選日期沒有可匯出的送貨記錄。");
-    return;
-  }
-  if (typeof JSZip === "undefined") {
-    alert("打包套件載入失敗；內網使用請下載zxing、jszip放到伺服器lib目錄自行托管！");
-    return;
-  }
-
-  const zip = new JSZip();
-  let csv = "ID,StaffNumber,DeliveryType,BinCard,Destination,CompleteTime,PhotoFiles\n";
-  const photoFolder = zip.folder("Photos");
-  let globalPhotoCounter = 1;
-
-  exportRecords.forEach((r) => {
-    let photoFiles = [];
-    (r.photos || []).forEach((photoSrc) => {
-      const staffId = r.runner?.staffId || 'unknown';
-      let dateParts = (r.completedAt || '').split(' ')[0].split('/');
-      let dateStr = day.replace(/-/g, '');
-      if (dateParts.length === 3) {
-        dateStr = `${dateParts[2]}${dateParts[1].padStart(2, '0')}${dateParts[0].padStart(2, '0')}`;
-      }
-
-      const seq = String(globalPhotoCounter++).padStart(7, '0');
-      const filename = `${staffId}_${dateStr}_${seq}.jpg`;
-
-      photoFiles.push(`Photos/${filename}`);
-      const comma = photoSrc.indexOf(",");
-      const b64 = comma !== -1 ? photoSrc.substring(comma + 1) : "";
-      if (b64) {
-        photoFolder.file(filename, b64, { base64: true });
-      }
-    });
-    csv += `"${r.id}","${r.runner?.staffId || ''}","${r.deliveryType || '街貨'}","${r.binCard}","${r.destination}","${r.completedAt}","${photoFiles.join(';')}"\n`;
-  });
-
-  zip.file("Delivery_Report.csv", "\uFEFF" + csv);
-  const blob = await zip.generateAsync({ type: "blob", mimeType: "application/zip" });
-  const filename = `Delivery_Archive_${selectedDateInput || day}.zip`;
-  const zipFile = new File([blob], filename, { type: "application/zip" });
-
-  if (navigator.canShare && navigator.canShare({ files: [zipFile] })) {
-    try {
-      await navigator.share({
-        title: '每日送貨總表與相片【內地華為小米版】',
-        text: `送貨報表 (${selectedDateInput || day})，共 ${exportRecords.length} 單。華為小米如分享失敗，會自動觸發下載。`,
-        files: [zipFile]
+        };
+        req.onsuccess = (e) => {
+          dbInstance = e.target.result;
+          resolve(dbInstance);
+        };
+        req.onerror = () => reject(req.error || new Error('IndexedDB open error'));
       });
-      return;
-    } catch (err) {
-      if (err.name === 'AbortError') return;
-      console.log('國行手機分享ZIP失敗，切直接下載', err);
     }
-  }
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+    async function idbGetAllRecords() {
+      const db = await openDeliveryDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_RECORDS, 'readonly');
+        const store = tx.objectStore(STORE_RECORDS);
+        const req = store.getAll();
+        req.onsuccess = () => {
+          const list = Array.isArray(req.result) ? req.result : [];
+          // 保持最新記錄排最前（與原本 records.unshift 行為一致）
+          list.sort((a, b) => String(b.id || '').localeCompare(String(a.id || '')));
+          resolve(list);
+        };
+        req.onerror = () => reject(req.error || new Error('IndexedDB getAll error'));
+      });
+    }
 
-  const downloadArea = document.getElementById('downloadArea');
-  downloadArea.innerHTML = `
-    <div style="background: #f0fdf4; border: 3px solid #10b981; padding: 18px; border-radius: 16px; text-align: center; margin-top: 12px;">
-      <p style="margin: 0 0 12px 0; font-size: 18px; font-weight: bold; color: #065f46;">✅壓縮檔已觸發下載！華為/小米內地版分享檔案大多失敗，務必確認手機已保存ZIP備份！<br>如未開始下載，請按下方綠色大掣：</p>
-      <a href="${url}" download="${filename}" style="display: block; background: #059669; color: white; padding: 18px; border-radius: 14px; font-weight: 900; text-decoration: none; font-size: 20px;">
-        📥 點擊儲存報表壓縮檔 (${filename})
-      </a>
-    </div>
-  `;
-}
-</script>
+    async function idbPutRecord(rec) {
+      const db = await openDeliveryDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_RECORDS, 'readwrite');
+        const store = tx.objectStore(STORE_RECORDS);
+        const req = store.put(rec);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error || new Error('IndexedDB put error'));
+      });
+    }
+
+    async function idbClearRecords() {
+      const db = await openDeliveryDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_RECORDS, 'readwrite');
+        const store = tx.objectStore(STORE_RECORDS);
+        const req = store.clear();
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error || new Error('IndexedDB clear error'));
+      });
+    }
+
+    function showToast(msg, duration = 4200) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.add('hidden'), duration);
+    }
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    function playBeep() {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        const c = new Ctx();
+        const o = c.createOscillator();
+        const g = c.createGain();
+        o.frequency.value = 1050;
+        g.gain.value = 0.15;
+        o.connect(g);
+        g.connect(c.destination);
+        o.start();
+        o.stop(c.currentTime + 0.12);
+      } catch (e) {}
+    }
+
+    async function init() {
+      const ua = navigator.userAgent.toLowerCase();
+      if (ua.includes('micromessenger') || ua.includes('wv') || ua.includes('huawei') || ua.includes('harmony')) {
+        document.getElementById('browserAlert').classList.remove('hidden');
+      }
+      try {
+        records = await idbGetAllRecords();
+      } catch (e) {
+        records = [];
+        showToast('IndexedDB 讀取失敗：' + (e && e.message ? e.message : '請檢查瀏覽器儲存權限'));
+      }
+      const saved = JSON.parse(localStorage.getItem(KEY + '_runner') || 'null');
+      if (saved && saved.date === today) {
+        runner = saved;
+        showApp();
+      }
+      document.getElementById('exportDate').value = new Date().toISOString().slice(0, 10);
+    }
+
+    function checkStaffSavedType() {
+      const s = document.getElementById('staff').value.trim();
+      if (!s) return;
+      const saved = JSON.parse(localStorage.getItem(KEY + '_type_' + s) || 'null');
+      if (saved && (saved === '街貨' || saved === '倉貨')) {
+        document.getElementById('deliveryTypeSelect').value = saved;
+      }
+    }
+
+    function login() {
+      const s = document.getElementById('staff').value.trim();
+      if (!s) {
+        showToast('請輸入人員工號！');
+        return;
+      }
+      const t = document.getElementById('deliveryTypeSelect').value || '街貨';
+      localStorage.setItem(KEY + '_type_' + s, JSON.stringify(t));
+      runner = { staffId: s, deliveryType: t, date: today };
+      localStorage.setItem(KEY + '_runner', JSON.stringify(runner));
+      showApp();
+    }
+
+    function logout() {
+      localStorage.removeItem(KEY + '_runner');
+      runner = null;
+      document.getElementById('app').classList.add('hidden');
+      document.getElementById('login').classList.remove('hidden');
+    }
+
+    function showApp() {
+      document.getElementById('login').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      document.getElementById('runner').textContent = runner.staffId;
+      document.getElementById('runnerType').textContent = runner.deliveryType || '街貨';
+      updateCountDisplay();
+      resetForm();
+    }
+
+    function updateCountDisplay() {
+      const count = records.filter(r => r.runner && r.runner.staffId === runner.staffId).length;
+      document.getElementById('transCount').textContent = count;
+    }
+
+    function tab(x) {
+      document.getElementById('work').classList.toggle('hidden', x !== 'work');
+      document.getElementById('history').classList.toggle('hidden', x !== 'history');
+      document.getElementById('twork').classList.toggle('active', x === 'work');
+      document.getElementById('thistory').classList.toggle('active', x === 'history');
+      if (x === 'history') renderHistory();
+    }
+
+    function openChangeTypeModal() {
+      document.getElementById('typeModal').classList.remove('hidden');
+    }
+
+    function closeChangeTypeModal() {
+      document.getElementById('typeModal').classList.add('hidden');
+    }
+
+    function selectNewType(t) {
+      runner.deliveryType = t;
+      localStorage.setItem(KEY + '_type_' + runner.staffId, JSON.stringify(t));
+      localStorage.setItem(KEY + '_runner', JSON.stringify(runner));
+      document.getElementById('runnerType').textContent = t;
+      closeChangeTypeModal();
+      showToast('已更新貨物類型為：' + t, 2200);
+    }
+
+    function resetForm() {
+      binCard = null;
+      isNonHub = false;
+      destination = null;
+      photos = [];
+      document.getElementById('binInput').value = '';
+      document.getElementById('destInput').value = '';
+      document.getElementById('binCardStatus').innerHTML = '';
+      document.getElementById('destStatus').innerHTML = '';
+      document.getElementById('destCard').classList.add('hidden');
+      document.getElementById('photoCard').classList.add('hidden');
+      document.getElementById('photoStepTitle').textContent = '第三步';
+      renderPhotos();
+      validateForm();
+    }
+
+    function applyBinCard(raw) {
+      const v = String(raw || '').trim();
+      if (!v) return;
+      isNonHub = v.toLowerCase().includes('non-hub');
+      binCard = {
+        code: v,
+        isNonHub,
+        time: new Date().toLocaleString('zh-HK', { hour12: false })
+      };
+      document.getElementById('binCardStatus').innerHTML =
+        '<div class="status ok"><span>貨卡：<b>' + esc(v) + '</b>' +
+        (isNonHub ? '<span class="tag-nonhub">Non-hub 免對比</span>' : '') +
+        '</span></div>';
+
+      if (isNonHub) {
+        destination = {
+          code: 'NON-HUB',
+          time: new Date().toLocaleString('zh-HK', { hour12: false })
+        };
+        document.getElementById('destCard').classList.add('hidden');
+        document.getElementById('photoCard').classList.remove('hidden');
+        document.getElementById('photoStepTitle').textContent = '第二步（免對比目的地）';
+      } else {
+        document.getElementById('destCard').classList.remove('hidden');
+        document.getElementById('photoCard').classList.add('hidden');
+        document.getElementById('photoStepTitle').textContent = '第三步';
+      }
+      verifyMatch();
+      validateForm();
+    }
+
+    function applyDestination(raw) {
+      const v = String(raw || '').trim();
+      if (!v) return;
+      destination = {
+        code: v,
+        time: new Date().toLocaleString('zh-HK', { hour12: false })
+      };
+      document.getElementById('destCard').classList.remove('hidden');
+      document.getElementById('photoCard').classList.remove('hidden');
+      document.getElementById('photoStepTitle').textContent = '第三步';
+      verifyMatch();
+      validateForm();
+    }
+
+    function verifyMatch() {
+      if (!binCard || !destination) return;
+      const ok = isNonHub || (binCard.code.toLowerCase() === destination.code.toLowerCase());
+      document.getElementById('destStatus').innerHTML = ok
+        ? '<div class="status ok"><span>驗證成功（對應一致）：<b>' + esc(destination.code) + '</b></span></div>'
+        : '<div class="status bad"><span>目的地不匹配！貨卡 ' + esc(binCard.code) + ' ≠ ' + esc(destination.code) + '</span></div>';
+    }
+
+    function validateForm() {
+      const matched = isNonHub || (binCard && destination && binCard.code.toLowerCase() === destination.code.toLowerCase());
+      const valid = Boolean(runner && binCard && destination && matched && photos.length > 0);
+      document.getElementById('completeBtn').disabled = !valid;
+      document.getElementById('wechatBtn').disabled = !valid;
+    }
+
+    // 相機與拍照
+    async function openProofCamera() {
+      if (!binCard) {
+        showToast('請先掃描貨卡條碼！');
+        return;
+      }
+      if (!isNonHub && !destination) {
+        showToast('請先完成目的地驗證！');
+        return;
+      }
+      document.getElementById('proofCamera').classList.remove('hidden');
+      const v = document.getElementById('proofVideo');
+      if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        useSystemProofCamera();
+        return;
+      }
+      try {
+        proofStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false
+        });
+        v.srcObject = proofStream;
+        await v.play();
+      } catch (e) {
+        useSystemProofCamera();
+      }
+    }
+
+    function useSystemProofCamera() {
+      closeProofCamera();
+      const input = document.getElementById('proofSystemInput');
+      input.value = '';
+      input.click();
+    }
+
+    function handleProofSystemPhoto(ev) {
+      const f = ev.target.files && ev.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        photos.push(reader.result);
+        renderPhotos();
+        validateForm();
+      };
+      reader.readAsDataURL(f);
+    }
+
+    function takeProofPhoto() {
+      const v = document.getElementById('proofVideo');
+      const c = document.getElementById('proofCanvas');
+      if (!v.videoWidth || !v.videoHeight) return;
+      c.width = v.videoWidth;
+      c.height = v.videoHeight;
+      c.getContext('2d').drawImage(v, 0, 0);
+      photos.push(c.toDataURL('image/jpeg', 0.72));
+      closeProofCamera();
+      renderPhotos();
+      validateForm();
+    }
+
+    function closeProofCamera() {
+      if (proofStream) {
+        proofStream.getTracks().forEach(t => t.stop());
+        proofStream = null;
+      }
+      const v = document.getElementById('proofVideo');
+      v.srcObject = null;
+      document.getElementById('proofCamera').classList.add('hidden');
+    }
+
+    function renderPhotos() {
+      const el = document.getElementById('photos');
+      el.innerHTML = photos.map((p, i) =>
+        '<div class="photo">' +
+          '<img src="' + p + '" onclick="showImageModal(this.src)" />' +
+          '<button type="button" onclick="photos.splice(' + i + ',1);renderPhotos();validateForm();">×</button>' +
+        '</div>'
+      ).join('');
+    }
+
+    function showImageModal(src) {
+      document.getElementById('modalImg').src = src;
+      document.getElementById('imageModal').classList.remove('hidden');
+    }
+
+    function closeImageModal() {
+      document.getElementById('imageModal').classList.add('hidden');
+    }
+
+    // 條碼掃描（ZXing + 原生 BarcodeDetector + 系統相機讀圖）
+    function scanFailure(msg) {
+      const el = document.getElementById('scanError');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      document.getElementById('engineBadge').textContent = '後備模式';
+    }
+
+    function stopActiveCamera() {
+      if (scannerV4Timer) {
+        clearTimeout(scannerV4Timer);
+        scannerV4Timer = null;
+      }
+      if (nativeScanLoopId) {
+        clearTimeout(nativeScanLoopId);
+        nativeScanLoopId = null;
+      }
+      if (activeScanStream) {
+        activeScanStream.getTracks().forEach(t => {
+          try { t.stop(); } catch (e) {}
+        });
+        activeScanStream = null;
+      }
+      if (codeReader) {
+        try { codeReader.reset(); } catch (e) {}
+      }
+      const v = document.getElementById('video');
+      try { v.pause(); } catch (e) {}
+      v.srcObject = null;
+    }
+
+    function closeScanner() {
+      isProcessingScan = false;
+      stopActiveCamera();
+      document.getElementById('scanner').classList.add('hidden');
+    }
+
+    function openSystemScanner() {
+      stopActiveCamera();
+      document.getElementById('engineBadge').textContent = '系統相機模式';
+      document.getElementById('scanMsg').textContent = '請拍攝清晰、完整、正面的條碼';
+      const input = document.getElementById('systemCameraInput');
+      input.value = '';
+      input.click();
+    }
+
+    async function handleSystemScanImage(ev) {
+      const file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      document.getElementById('scanMsg').textContent = '正在辨識相片中的條碼...';
+      try {
+        if (!window.ZXing) throw new Error('ZXing not loaded');
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = async () => {
+          try {
+            const hints = new Map();
+            hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+            const reader = new ZXing.BrowserMultiFormatReader(hints);
+            const result = await reader.decodeFromImageElement(img);
+            URL.revokeObjectURL(url);
+            if (result && result.text) {
+              handleScanSuccess(result.text);
+              return;
+            }
+            throw new Error('NotFound');
+          } catch (e) {
+            URL.revokeObjectURL(url);
+            scanFailure('未能辨識條碼，請靠近拍攝、保持條碼完整及避免反光。');
+          }
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          scanFailure('相片讀取失敗');
+        };
+        img.src = url;
+      } catch (e) {
+        scanFailure('辨識引擎無法使用');
+      }
+    }
+
+    async function openScanner(target) {
+      scanTarget = target;
+      isProcessingScan = false;
+      scannerV4SecondaryStarted = false;
+      scannerV4Attempts = 0;
+      scannerV4StartedAt = performance.now();
+
+      document.getElementById('scanner').classList.remove('hidden');
+      document.getElementById('scanError').classList.add('hidden');
+      document.getElementById('scanTitle').textContent =
+        target === 'staff' ? '請掃描人員工號' :
+        target === 'bincard' ? '請掃描貨卡條碼' : '請掃描目的地條碼';
+      document.getElementById('scanMsg').textContent = '請將條碼置於畫面中央，V4 會使用完整畫面辨識';
+
+      if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        scanFailure('此瀏覽器不能使用即時相機，請使用「系統相機掃描」。');
+        return;
+      }
+
+      const video = document.getElementById('video');
+      const modes = [
+        { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
+        { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+        { video: { facingMode: { ideal: 'environment' } }, audio: false },
+        { video: true, audio: false }
+      ];
+
+      let stream = null;
+      let lastErr = null;
+      for (const c of modes) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(c);
+          break;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+
+      if (!stream) {
+        scanFailure('臨時相機無法啟動 (' + (lastErr && lastErr.name ? lastErr.name : 'CameraError') + ')');
+        return;
+      }
+
+      activeScanStream = stream;
+      video.srcObject = stream;
+      video.setAttribute('playsinline', 'true');
+      video.muted = true;
+      try {
+        await video.play();
+      } catch (e) {
+        scanFailure('相機預覽失敗，請使用系統相機掃描。');
+        return;
+      }
+
+      document.getElementById('engineBadge').textContent = 'V4 ZXing 掃描模式';
+      startZXingPrimary(video);
+      scannerV4Timer = setTimeout(() => {
+        if (!isProcessingScan) startNativeSecondary(video);
+      }, 3000);
+    }
+
+    function startZXingPrimary(video) {
+      if (!window.ZXing) {
+        scanFailure('ZXing 掃描程式未能載入。');
+        return;
+      }
+      try { codeReader.reset(); } catch (e) {}
+      const hints = new Map();
+      hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+      codeReader = new ZXing.BrowserMultiFormatReader(hints);
+      codeReader.decodeFromVideoElement(video, (result) => {
+        if (isProcessingScan) return;
+        scannerV4Attempts++;
+        if (result && result.text) {
+          handleScanSuccess(result.text);
+        }
+      });
+    }
+
+    async function startNativeSecondary(video) {
+      if (scannerV4SecondaryStarted || isProcessingScan) return;
+      scannerV4SecondaryStarted = true;
+      if (!('BarcodeDetector' in window)) return;
+      try {
+        const supported = await BarcodeDetector.getSupportedFormats();
+        const wanted = ['code_128', 'code_39', 'ean_13', 'ean_8', 'qr_code', 'codabar', 'itf'];
+        const formats = wanted.filter(f => supported.includes(f));
+        const detector = new BarcodeDetector({ formats: formats.length ? formats : supported });
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        const loop = async () => {
+          if (isProcessingScan || !activeScanStream) return;
+          if (video.videoWidth && video.videoHeight) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+            try {
+              const found = await detector.detect(canvas);
+              if (found && found[0] && found[0].rawValue) {
+                handleScanSuccess(found[0].rawValue);
+                return;
+              }
+            } catch (e) {}
+          }
+          nativeScanLoopId = setTimeout(loop, 180);
+        };
+        loop();
+      } catch (e) {}
+    }
+
+    function handleScanSuccess(text) {
+      if (isProcessingScan || !text) return;
+      isProcessingScan = true;
+      playBeep();
+      if (navigator.vibrate) {
+        try { navigator.vibrate(100); } catch (e) {}
+      }
+      const clean = String(text).trim();
+      if (scanTarget === 'staff') {
+        document.getElementById('staff').value = clean;
+        checkStaffSavedType();
+      } else if (scanTarget === 'bincard') {
+        document.getElementById('binInput').value = clean;
+        applyBinCard(clean);
+      } else if (scanTarget === 'dest') {
+        document.getElementById('destInput').value = clean;
+        applyDestination(clean);
+      }
+      closeScanner();
+    }
+
+    // 完成送貨與分享（改寫入 IndexedDB）
+    async function completeDelivery(shouldShare) {
+      const t = new Date().toLocaleString('zh-HK', { hour12: false });
+      const rec = {
+        id: 'DLV-' + Date.now(),
+        runner,
+        deliveryType: runner.deliveryType || '街貨',
+        binCard: binCard.code,
+        isNonHub,
+        destination: destination.code,
+        photos: [...photos],
+        completedAt: t
+      };
+      try {
+        await idbPutRecord(rec);
+      } catch (e) {
+        showToast('儲存空間不足或寫入失敗：' + (e && e.message ? e.message : '請聯絡管理員'));
+        return;
+      }
+      records.unshift(rec);
+
+      updateCountDisplay();
+      const okEl = document.getElementById('success');
+      okEl.classList.remove('hidden');
+      setTimeout(() => okEl.classList.add('hidden'), 2200);
+
+      if (shouldShare) {
+        await shareToWeChatAction(rec);
+      }
+      resetForm();
+    }
+
+    function buildShareText(rec) {
+      return [
+        '【送貨完成記錄】',
+        '貨卡：' + rec.binCard,
+        '目的地：' + rec.destination,
+        '貨物類型：' + (rec.deliveryType || '街貨'),
+        '送貨員：' + ((rec.runner && rec.runner.staffId) || ''),
+        '完成時間：' + rec.completedAt
+      ].join('\n');
+    }
+
+    function dataURLToFiles(rec) {
+      const files = [];
+      (rec.photos || []).forEach((dataURL, idx) => {
+        try {
+          const parts = dataURL.split(',');
+          if (parts.length < 2) return;
+          const mimeMatch = parts[0].match(/:(.*?);/);
+          const mime = (mimeMatch && mimeMatch[1]) || 'image/jpeg';
+          const bytes = atob(parts[1]);
+          const arr = new Uint8Array(bytes.length);
+          for (let j = 0; j < bytes.length; j++) arr[j] = bytes.charCodeAt(j);
+          files.push(new File([arr], 'delivery_' + rec.id + '_' + (idx + 1) + '.jpg', {
+            type: mime,
+            lastModified: Date.now()
+          }));
+        } catch (e) {
+          console.warn('Photo file conversion failed', e);
+        }
+      });
+      return files;
+    }
+
+    async function copyTextQuietly(text) {
+      if (!text) return false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+      } catch (e) {}
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function downloadFilesLocally(files) {
+      (files || []).forEach((f, idx) => {
+        setTimeout(() => {
+          const u = URL.createObjectURL(f);
+          const a = document.createElement('a');
+          a.href = u;
+          a.download = f.name;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(u), 3000);
+        }, idx * 250);
+      });
+    }
+
+    async function fallbackShare(text, files, reason) {
+      await copyTextQuietly(text);
+      if (files && files.length) {
+        downloadFilesLocally(files);
+        showToast(reason + '｜已自動複製文字並下載相片，請於 WeChat 貼上文字並附加相片。', 5200);
+      } else {
+        showToast(reason + '｜已自動複製文字記錄，請於 WeChat 貼上。', 4200);
+      }
+    }
+
+    async function shareToWeChatAction(rec) {
+      const text = buildShareText(rec);
+      const files = dataURLToFiles(rec);
+      const hasShare = typeof navigator.share === 'function';
+      const hasCanShare = typeof navigator.canShare === 'function';
+
+      if (!window.isSecureContext) {
+        return fallbackShare(text, files, '目前非 HTTPS 環境');
+      }
+
+      if (hasShare && hasCanShare && files.length > 0) {
+        try {
+          if (navigator.canShare({ files })) {
+            await navigator.share({ files });
+            await copyTextQuietly(text);
+            showToast('已喚起分享（文字已同步複製，如需要可貼上）。', 3500);
+            return;
+          }
+        } catch (e) {
+          if (e && e.name === 'AbortError') return;
+        }
+      }
+
+      if (hasShare) {
+        try {
+          await navigator.share({ title: '送貨完成記錄', text });
+          return;
+        } catch (e) {
+          if (e && e.name === 'AbortError') return;
+        }
+      }
+
+      return fallbackShare(text, files, '瀏覽器限制直接傳送檔案');
+    }
+
+    function shareHistoryRecord(id) {
+      const rec = records.find(x => x.id === id);
+      if (rec) shareToWeChatAction(rec);
+    }
+
+    function showShareDiagnostics() {
+      const hasShare = typeof navigator.share === 'function';
+      const hasCanShare = typeof navigator.canShare === 'function';
+      let imageFileShare = false;
+      try {
+        const testFile = new File([new Uint8Array([0])], 'share-test.jpg', { type: 'image/jpeg' });
+        imageFileShare = hasCanShare ? Boolean(navigator.canShare({ files: [testFile] })) : false;
+      } catch (e) {
+        imageFileShare = false;
+      }
+      const msg =
+        'HTTPS: ' + window.isSecureContext +
+        ' | share: ' + hasShare +
+        ' | canShare: ' + hasCanShare +
+        ' | imageFileShare: ' + imageFileShare;
+      showToast(msg, 6000);
+    }
+
+    function renderHistory() {
+      const q = (document.getElementById('search').value || '').trim().toLowerCase();
+      const list = records.filter(r =>
+        (r.binCard || '').toLowerCase().includes(q) ||
+        (r.destination || '').toLowerCase().includes(q) ||
+        (r.deliveryType || '').toLowerCase().includes(q)
+      );
+
+      document.getElementById('records').innerHTML = list.map(r =>
+        '<div class="card">' +
+          '<div class="title">貨卡：<b>' + esc(r.binCard) + '</b><span class="tag-type">' + esc(r.deliveryType || '街貨') + '</span></div>' +
+          '<div class="hint">目的地：' + esc(r.destination) + '｜送貨員：' + esc((r.runner && r.runner.staffId) || '') + '</div>' +
+          '<div class="hint">完成時間：' + esc(r.completedAt) + '</div>' +
+          '<div class="photos">' +
+            (r.photos || []).map(p => '<div class="photo"><img src="' + p + '" onclick="showImageModal(this.src)" /></div>').join('') +
+          '</div>' +
+          '<button class="history-wechat-btn" type="button" onclick="shareHistoryRecord(\'' + esc(r.id) + '\')">再次分享至 WeChat</button>' +
+        '</div>'
+      ).join('') || '<p class="hint" style="text-align:center;">暫無送貨記錄</p>';
+    }
+
+    async function exportDeliveryArchive() {
+      const selected = document.getElementById('exportDate').value;
+      const ex = records.filter(r => {
+        if (!selected) return true;
+        const d = new Date(r.completedAt);
+        if (isNaN(d.getTime())) return String(r.completedAt || '').includes(selected);
+        return d.toLocaleDateString('sv-SE') === selected;
+      });
+
+      if (!ex.length) {
+        showToast('所選日期沒有可匯出的送貨記錄。');
+        return;
+      }
+      if (typeof JSZip === 'undefined') {
+        showToast('打包元件 JSZip 尚未載入。');
+        return;
+      }
+
+      const zip = new JSZip();
+      let csv = 'ID,StaffNumber,DeliveryType,BinCard,Destination,CompleteTime,PhotoFiles\n';
+      const folder = zip.folder('Photos');
+      let n = 1;
+
+      ex.forEach(r => {
+        const fs = r.photos || [];
+        const names = [];
+        fs.forEach(p => {
+          const parts = String(p).split(',');
+          if (parts.length < 2) return;
+          const mimeMatch = parts[0].match(/:(.*?);/);
+          const ext = (mimeMatch && mimeMatch[1] && mimeMatch[1].includes('png')) ? 'png' : 'jpg';
+          const fn = (r.runner && r.runner.staffId ? r.runner.staffId : 'unknown') + '_' + (selected || 'all') + '_' + String(n++).padStart(3, '0') + '.' + ext;
+          folder.file(fn, parts[1], { base64: true });
+          names.push('Photos/' + fn);
+        });
+        csv += [
+          r.id,
+          (r.runner && r.runner.staffId) || '',
+          r.deliveryType || '街貨',
+          r.binCard || '',
+          r.destination || '',
+          r.completedAt || '',
+          names.join(';')
+        ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',') + '\n';
+      });
+
+      zip.file('Delivery_Report.csv', '\uFEFF' + csv);
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const fn = 'Delivery_Archive_' + (selected || 'all') + '.zip';
+      const file = new File([blob], fn, { type: 'application/zip' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ title: '每日送貨報表與相片', files: [file] });
+          return;
+        } catch (e) {
+          if (e && e.name === 'AbortError') return;
+        }
+      }
+
+      const u = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = u;
+      a.download = fn;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(u), 3000);
+
+      document.getElementById('downloadArea').innerHTML =
+        '<div class="hint">已下載 <b>' + esc(fn) + '</b>，請於檔案管理中分享至 WeChat。</div>';
+      showToast('已下載 ' + fn + '，請於 WeChat 選擇檔案傳送。', 4500);
+    }
+
+    async function adminClearRecords() {
+      const p = prompt('請輸入管理員密碼以清空記錄：');
+      if (p === '888888') {
+        try {
+          await idbClearRecords();
+          records = [];
+          renderHistory();
+          updateCountDisplay();
+          showToast('已成功清空所有歷史記錄與相片空間！');
+        } catch (e) {
+          showToast('清空 IndexedDB 失敗：' + (e && e.message ? e.message : '請重試'));
+        }
+      } else if (p !== null) {
+        showToast('密碼錯誤！');
+      }
+    }
+
+    init();
+  </script>
 </body>
 </html>
